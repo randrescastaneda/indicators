@@ -81,6 +81,16 @@ qui {
 	
 	local calcset = lower("`calcset'")
 	
+	/*====================================================================
+	REPORT
+	====================================================================*/
+	
+	if (regexm("`calcset'", "report")) {
+		indicators_report, file("`out'\indicators_reportfile.dta")
+		exit
+	}
+	
+	
 	*--------------- Post file creation-----------------
 	tempname ef
 	tempfile errfile
