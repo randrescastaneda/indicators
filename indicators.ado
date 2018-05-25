@@ -24,7 +24,7 @@ Years(numlist)                      ///
 REGions(string)                     ///
 FILENames(string)                   ///
 REPOsitory(passthru)                ///
-reporoot(passthru)                  ///
+reporoot(string)                    ///
 MODule(passthru)                    ///
 plines(string)                      ///
 cpivintage(string)                  ///
@@ -42,8 +42,9 @@ clear  *                            ///
 
 drop _all
 * Directory Paths
-global out         "Z:\wb384996\Andres\temporal\stata"
-global reporoot    "Z:\wb384996\Andres\temporal\stata"
+
+local out         "\\wbgfscifs01\GTSD\02.core_team\02.data\01.Indicators"
+if ("`reporoot'" == "") local reporoot "`out'"
 
 
 qui {
@@ -80,6 +81,16 @@ qui {
 	
 	local calcset = lower("`calcset'")
 	
+	/*====================================================================
+	REPORT
+	====================================================================*/
+	
+	if (regexm("`calcset'", "report")) {
+		indicators_report, file("`out'\indicators_reportfile.dta")
+		exit
+	}
+	
+	
 	*--------------- Post file creation-----------------
 	tempname ef
 	tempfile errfile
@@ -93,13 +104,13 @@ qui {
 	
 	*--------------------1.1: Load repository data
 	if ("`createrepo'" != "") {
-		cap datalibweb, repo(erase `repository', force) reporoot("${reporoot}") type(GMD)
-		datalibweb, repo(create `repository') reporoot("${reporoot}") /* 
+		cap datalibweb, repo(erase `repository', force) reporoot("`reporoot'") type(GMD)
+		datalibweb, repo(create `repository') reporoot("`reporoot'") /* 
 		*/         type(GMD) country(`countries') year(`years')       /* 
 		*/         region(`regions') module(`module')
 	}
 	
-	use "${reporoot}\repo_`repository'.dta", clear
+	use "`reporoot'\repo_`repository'.dta", clear
 	
 	drop if module == "L"  // Ask Minh what is L and whether this drop id OK
 	
@@ -292,7 +303,7 @@ qui {
 		if (regexm("`calcset'", "pov")) {
 			if regexm("`trace'", "pov") set trace on
 			use `wrkpov', clear
-			local povfile_wide "${out}\indicators_pov_wide.dta"
+			local povfile_wide "`out'\indicators_pov_wide.dta"
 			cap confirm new file "`povfile_wide'"
 			if (_rc) {
 				append using "`povfile_wide'"
@@ -309,7 +320,7 @@ qui {
 			reshape long fgt, i(filename line date time vc_*) j(FGT)
 			rename (FGT fgt) (fgt values)
 			order region countrycode year filename  line fgt values
-			save "${out}\indicators_pov_long.dta", replace
+			save "`out'\indicators_pov_long.dta", replace
 			
 			levelsof region, local(regionsp)
 			foreach regionp of local regionsp {
@@ -325,7 +336,7 @@ qui {
 		if (regexm("`calcset'", "ine")) {
 			if regexm("`trace'", "ine") set trace on
 			use `wrkine', clear
-			local inefile_wide "${out}\indicators_ine_wide.dta"
+			local inefile_wide "`out'\indicators_ine_wide.dta"
 			cap confirm new file "`inefile_wide'"
 			if (_rc) {
 				append using "`inefile_wide'"
@@ -339,7 +350,7 @@ qui {
 			
 			reshape long values, i(filename) j(ineq) string
 			order region countrycode year filename ineq values
-			save "${out}\indicators_ine_long.dta", replace
+			save "`out'\indicators_ine_long.dta", replace
 			
 			levelsof region, local(regionsp)
 			foreach regionp of local regionsp {
@@ -379,7 +390,7 @@ qui {
 			wbopendata, indicator(`wbodata') long clear nometadata
 			compress
 			_gendatetime, date("`date'") time("`time'")
-			local wdifile_wide "${out}\indicators_wdi_wide.dta"
+			local wdifile_wide "`out'\indicators_wdi_wide.dta"
 			cap confirm new file "`wdifile_wide'"
 			if (_rc) {
 				append using "`wdifile_wide'"
@@ -406,7 +417,7 @@ qui {
 			rename (`indvars') values=
 			reshape long values, i(regioncode countrycode year date time) j(wdi) string
 			
-			save "${out}\indicators_wdi_long.dta", replace
+			save "`out'\indicators_wdi_long.dta", replace
 			
 			if regexm("`trace'", "wdi") set trace off
 		}  // end of cap
@@ -455,7 +466,7 @@ qui {
 	count
 	if r(N) >= 1 {
 		_gendatetime, date("`date'") time("`time'")
-		local masterr "${out}\summaryfile.dta"
+		local masterr "`out'\indicators_reportfile.dta"
 		cap confirm new file "`masterr'"
 		if (_rc) append using "`masterr'"
 		
@@ -497,33 +508,9 @@ qui {
 		
 		save "`masterr'", replace
 		
-		* --------Display results
-		** Those that are OK
-		
-		noi disp in w _dup(30) "-" " Countries OK" _dup(30) "-"
-		if (`nok' != 0) {
-			local tabdispt `"tabdisp filename date  if (regexm(strofreal(comment), "0$")), c(comment time) concise  by(region)"'
-			noi `tabdispt'
-			noi disp `"{stata `tabdispt':replicate}"'
-		}
-		else noi disp "no observation was ok"
-		
-		** Those with errors
-		noi disp in w _dup(30) "-" " Countries with errors " _dup(30) "-"
-		if (`nerr' != 0) {
-			local tabdispt `"tabdisp filename  date if (regexm(strofreal(comment), "[1-9]$") & ok == 0), c(comment time) concise by(region)"'
-			noi `tabdispt'
-			noi disp `"{stata `tabdispt':replicate table}"'
-		}
-		else noi disp "no observation with Error"
-		noi disp in w "{hline}"
-	}
-	set trace off
-	
-	*--------------------4.2:
+		indicators_report , file("`masterr'")
 	
 	
-	*--------------------4.3:
 	
 } // end of qui
 
@@ -657,7 +644,7 @@ scalar a = fileread("c:\ado\plus/w/wbopendata_indicators.hlp")
 Version Control:
 
 
-adopath ++ "z:\wb384996\Andres\temporal\GTSD\02.core_team\01.programs\01.ado\indicators"
+adopath ++ "\\\wbgfscifs01\GTSD\02.core_team\01.programs\01.ado\indicators"
 
 indicators pov, countr(PRY ALB) years(2012 2013) trace(pov)
 
