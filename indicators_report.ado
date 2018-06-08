@@ -21,8 +21,7 @@ qui {
 	noi disp in w _dup(30) "-" " Countries OK" _dup(30) "-"
 	if (`nok' != 0) {
 		local tabdispt `"tabdisp filename date  if (regexm(strofreal(comment), "0$")), c(comment time) concise  by(region)"'
-		noi `tabdispt'
-		noi disp `"{stata `tabdispt':replicate}"'
+		noi disp `"{stata `tabdispt':OK table}"'
 	}
 	else noi disp "no observation was ok"
 	
@@ -33,7 +32,7 @@ qui {
 	if (`nerr' != 0) {
 		local tabdispt `"tabdisp filename  date if (regexm(strofreal(comment), "[1-9]$") & ok == 0), c(comment time) concise by(region)"'
 		noi `tabdispt'
-		noi disp `"{stata `tabdispt':replicate table}"'
+		noi disp `"{stata `tabdispt':NOT ok table}"'
 	}
 	else noi disp "no observation with Error"
 	noi disp in w "{hline}"

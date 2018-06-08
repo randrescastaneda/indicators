@@ -10,9 +10,13 @@ Creation Date:     1 Jun 2018 - 15:32:22
 ==================================================*/
 program define indicators_vcontrol, rclass
 
-syntax, vars(varlist)
-
+syntax , vars(varlist)
 qui {
+	
+	/*==================================================
+	1: Vintage Control Variables
+	==================================================*/
+	
 	tempvar vermast veralt malt mdate mmst
 	foreach var in vermast veralt {
 		gen ``var'' = subinstr(upper(`var'), "V", "", .)
@@ -65,11 +69,12 @@ qui {
 		if (_rc == 0) {
 			noi disp "{ul:NOTE:} Vintage control variable for today (vc_`dt')" /* 
 			*/ _c " is the same as the one last time (`maxvc')" _n
-			exit 
+			exit
 		}
+	
 	}
 	
-	rename `mdate' vc_`dt'
+	rename `mdate' vc_`dt' 
 	
 }
 
