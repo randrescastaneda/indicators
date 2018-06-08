@@ -73,7 +73,7 @@ if ("`calcset'" == "ine") {
 }
 if ("`calcset'" == "shp") {
 	local sname "Shared Prosperity"
-	local disptab `"tabdisp year veralt case if (region == "\`regionp'"), c(values) by(countryname) concise"'
+	local disptab `"tabdisp year veralt case if (region == "\`regionp'" & inlist(case, "b40", "t60", "mean")), c(values) by(countryname) concise"'
 }
 
 
