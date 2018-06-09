@@ -37,6 +37,7 @@ createrepo                          ///
 save                                ///
 noSHOW                              ///
 clear                               ///
+WELFAREvars(string)                  ///
 ]
 
 
@@ -80,6 +81,12 @@ qui {
 	
 	
 	local calcset = lower("`calcset'")
+	
+	if ("`welfarevars'" == "") {
+		local welfarevars "welfare welfshprosperity welfareused pcexp pcinc"
+	}
+	
+	
 	
 	/*====================================================================
 	REPORT
@@ -178,10 +185,16 @@ qui {
 	if (regexm("`calcset'", "ine|pov|shp|all")) {
 		local wrkfiles "wrkpov wrkine wrkshp"
 		tempfile `wrkfiles'  // working surveys file
+		
+		cap erase __Iempty.dta
+		cap erase __Iwildcard.dta
+		
 		drop _all
 		foreach wrkfile of local wrkfiles {
 			save ``wrkfile'', replace emptyok
 		}
+		save __Iempty, replace emptyok
+		
 		
 		local i = 0
 		while (`i' < `n') {
@@ -199,20 +212,37 @@ qui {
 				("`filename'") (11)
 				continue
 			}
+			copy __Iempty.dta __Iwildcard.dta, replace 
 			
 			*--------------------2.3: check usability of survey
 			
 			**** Welfare
-			cap confirm var welfare, exact 
-			if (_rc) {
-				disp in red "No welfare variable in `filename'"
+			
+			local wlfvars ""
+			foreach wvar of local welfarevars {
+				cap confirm var `wvar', exact
+				if (_rc) continue
+				else { // welfare in ppp
+					
+					replace `wvar' = . if `wvar' < 0
+					cap gen double `wvar'_ppp = `wvar'/cpi2011/icp2011/365	
+					if (_rc) {
+						disp in red "Err creating `wvar'_ppp"
+						post `ef' ("`region'") ("`countrycode'") ("`year'") ///
+						("`filename'") (13)
+						continue
+					}
+					local wlfvars "`wlfvars' `wvar'"
+					
+				} // end of condition if var exists
+			} // end of welfare vars loop
+			
+			if ("`wlfvars'" == "") {
+				disp in red "No welfare variable available in `filename'"
 				post `ef' ("`region'") ("`countrycode'") ("`year'") ///
 				("`filename'") (12)
 				continue
 			}
-			gen  welfareused =  welfare // default welfare
-			cap drop if welfare<0  //NEW for EUSILC
-			
 			
 			**** treatment of weight variable
 			cap confirm var weight, exact 
@@ -224,18 +254,11 @@ qui {
 			cap drop __0*   // drop any temporal variable
 			cap tostring hhid, replace
 			
-			** welfare in ppp
-			cap gen double welfare_ppp = welfareused/cpi2011/icp2011/365
-			if (_rc) {
-				disp in red "Err creating welfare_ppp"
-				post `ef' ("`region'") ("`countrycode'") ("`year'") ///
-				("`filename'") (13)
-				
-				continue
-			}
 			
 			*percentiles
-			quantiles welfare_ppp [aw = `weight'], n(10) gen(q) keeptog(hhid)
+			foreach wvar of local wlfvars {
+				quantiles `wvar'_ppp [aw = `weight'], n(10) gen(q`wvar') keeptog(hhid)
+			}
 			
 			tempfile generalf dtasign
 			save `generalf', replace
@@ -248,7 +271,8 @@ qui {
 				cap datasignature confirm using `dtasign'
 				if (_rc) use `generalf', clear
 				
-				cap indicators_ine, weight(`weight') 
+				copy __Iempty.dta __Iwildcard.dta, replace 
+				cap indicators_ine, weight(`weight') wlfvars("`wlfvars'")
 				if (_rc) {
 					disp in red "Err calculating inequality"
 					post `ef' ("`region'") ("`countrycode'") ("`year'") ///
@@ -256,19 +280,11 @@ qui {
 					continue
 				}
 				else { // if no errors
-					local _gini = `r(_gini)'
-					local _theil = `r(_theil)'
-					
-					drop _all
-					set obs 1
-					* create variables and date
+					use __Iwildcard.dta, clear
 					foreach var of local vars {
 						gen `var' = "``var''"
 					}
 					_gendatetime, date("`date'") time("`time'")
-					
-					gen double valuesgini = `_gini'
-					gen double valuestheil = `_theil'
 					
 					append using `wrkine' 
 					compress
@@ -289,14 +305,22 @@ qui {
 				cap datasignature confirm  using `dtasign'
 				if (_rc) use `generalf', clear
 				
-				cap indicators_pov [aw = `weight'], plines("`plines'") ///
-				vars("`vars'") i(`i')
+				copy __Iempty.dta __Iwildcard.dta, replace 
+				cap indicators_pov [aw = `weight'], plines("`plines'") /* 
+				 */  wlfvars(`wlfvars')
+				 
 				if (_rc) {
 					disp in red "Err calculating poverty"
 					post `ef' ("`region'") ("`countrycode'") ("`year'") ///
 					("`filename'") (31)
 					continue
 				}
+				
+				use __Iwildcard.dta, clear
+				foreach var of local vars {
+					gen `var' = "``var''"
+				}
+				
 				_gendatetime, date("`date'") time("`time'")
 				
 				append using `wrkpov' 
@@ -315,7 +339,9 @@ qui {
 				cap datasignature confirm  using `dtasign'
 				if (_rc) use `generalf', clear
 				
-				cap b40 welfare_ppp [aw = `weight']
+				copy __Iempty.dta __Iwildcard.dta, replace 
+				cap indicators_shp [aw = `weight'], wlfvars(`wlfvars')
+				
 				if (_rc) {
 					disp in red "Err ShP"
 					post `ef' ("`region'") ("`countrycode'") ("`year'") ///
@@ -323,30 +349,13 @@ qui {
 					continue
 				}
 				else { // if not error
-					* store results
-					local results "St60 Nt60 t60 Sb40 Nb40 b40 Smean Nmean mean"
-					foreach r of local results {
-						local `r'  = `r(`r')'
-					} 
-					sum welfare_ppp [aw = `weight'] if q==10
-					local t10 = r(mean)
 					
-					* create variables and date
-					drop _all
-					set obs 1
+					use __Iwildcard.dta, clear
 					foreach var of local vars {
 						gen `var' = "``var''"
 					}
 					_gendatetime, date("`date'") time("`time'")
-					
-					* create variables with results
-					
-					foreach r of local results {
-						gen `r'  = ``r''
-					}
-					
-					gen t10 = `t10'
-					
+										
 					label var St60  "Sum of welfare of the Top 60"
 					label var Nt60  "No. of obs in the Top 60"
 					label var t60   "Mean welfare of Top 60"
@@ -376,7 +385,7 @@ qui {
 		
 		*------------------ Poverty  ---------------------
 		if (regexm("`calcset'", "pov|all")) {
-			if regexm("`trace'", "pov|all") set trace on
+			if regexm("`trace'", "file|all") set trace on
 			use `wrkpov', clear
 			
 			local basename "indicators_pov"
@@ -384,12 +393,13 @@ qui {
 			cap confirm new file "`povfile_wide'"
 			if (_rc) {
 				append using "`povfile_wide'"
-				local dropvars "region countrycode year filename fgt* welfare_mean"
+				replace welfarevar = "welfare" if welfarevar == "" 
+				local dropvars "region countrycode year filename welfarevar fgt* welfare_mean"
 				sort `dropvars' date time
 				duplicates drop `dropvars', force
 			}
 			
-			cap noi indicators_vcontrol, vars(region countrycode year survname)
+			cap noi indicators_vcontrol, vars(region countrycode year survname welfarevar)
 			if (_rc) {
 				disp in red "Err ine vcontrol"
 				post `ef' ("all") ("all") ("") ("") (32)
@@ -406,7 +416,7 @@ qui {
 		
 		*------------------ Inequality ---------------------
 		if (regexm("`calcset'", "ine|all")) {
-			if regexm("`trace'", "ine|all") set trace on
+			if regexm("`trace'", "file|all") set trace on
 			use `wrkine', clear
 			
 			local basename "indicators_ine"
@@ -414,12 +424,13 @@ qui {
 			cap confirm new file "`inefile_wide'"
 			if (_rc) {
 				append using "`inefile_wide'"
-				local dropvars "region countrycode year filename values*"
+				replace welfarevar = "welfare" if welfarevar == "" 
+				local dropvars "region countrycode year filename welfarevar values*"
 				sort `dropvars' date time
 				duplicates drop `dropvars', force
 			}
 			
-			cap noi indicators_vcontrol, vars(region countrycode year survname)
+			cap noi indicators_vcontrol, vars(region countrycode year survname welfarevar)
 			if (_rc) {
 				disp in red "Err ine vcontrol"
 				post `ef' ("all") ("all") ("") ("") (22)
@@ -436,7 +447,7 @@ qui {
 		
 		*------------------ Shared prosperity ---------------------
 		if (regexm("`calcset'", "shp|all")) {
-			if regexm("`trace'", "shp|all") set trace on
+			if regexm("`trace'", "file|all") set trace on
 			use `wrkshp', clear
 			
 			desc St60-t10, varlist
@@ -448,12 +459,13 @@ qui {
 			cap confirm new file "`shpfile_wide'"
 			if (_rc) {
 				append using "`shpfile_wide'"
-				local dropvars "region countrycode year filename values*"
+				replace welfarevar = "welfare" if welfarevar == "" 
+				local dropvars "region countrycode year filename welfarevar values*"
 				sort `dropvars' date time
 				duplicates drop `dropvars', force
 			}
 			
-			cap noi indicators_vcontrol, vars(region countrycode year survname)
+			cap noi indicators_vcontrol, vars(region countrycode year survname welfarevar)
 			if (_rc) {
 				disp in red "Err ShP vcontrol"
 				post `ef' ("all") ("all") ("") ("") (42)
@@ -465,14 +477,14 @@ qui {
 				disp in red "Err ShP saving"
 				post `ef' ("all") ("all") ("") ("") (43)
 			}
-
+			
 		} // end of shp file update
 		set trace off
 		
 		
 	}	// end of Poverty, Inequality, and Shared Prosperity
 	set trace off	
-
+	
 	
 	/*====================================================================
 	4: WDI
