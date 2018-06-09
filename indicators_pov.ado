@@ -7,34 +7,27 @@
 ====================================================================*/
 
 program define indicators_pov
-syntax [aweight fweight pweight], plines(string) wlfvars(string) 
+syntax [aweight fweight pweight], plines(string) vars(string) i(numlist)
 
-foreach wvar of local wlfvars {
-	preserve 
-	foreach ll of local plines	{
-		forval a=0/2	{
-			gen fgt`a'_`=100*`ll'' = 100*((`wvar'_ppp<`ll')*(1-(`wvar'_ppp/`ll'))^`a')
-		}
+mata: _ind_ids(R)
+foreach ll of local plines	{
+	forval a=0/2	{
+		gen fgt`a'_`=100*`ll'' = 100*((welfare_ppp<`ll')*(1-(welfare_ppp/`ll'))^`a')
 	}
-	
-	gen one = 1
-	groupfunction [`weight'`exp'], mean(fgt* cpi2011 icp2011 `wvar'_ppp) by(one)
-	drop one
-	
-	rename `wvar'_ppp welfare_mean
-	label var welfare_mean "Welfare mean dollar a day (2011 PPP)"
-	
-	gen welfarevar = "`wvar'"
-	
-	append using __Iwildcard
-	save __Iwildcard.dta, replace
-	restore
-}  // end of welfare vars loop
+}
+
+gen one = 1
+groupfunction [`weight'`exp'], mean(fgt* cpi2011 icp2011 welfare_ppp) by(one)
+drop one
+rename welfare_ppp welfare_mean
+label var welfare_mean "Welfare mean dollar a day (2011 PPP)"
+
+foreach var of local vars {
+	gen `var' = "``var''"
+}
 
 
 end
-
-
 
 mata:
 mata drop _ind*()
@@ -51,4 +44,3 @@ void _ind_ids(string matrix R) {
 } // end of IDs variables
 
 end
-

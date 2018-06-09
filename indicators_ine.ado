@@ -7,26 +7,17 @@
 ====================================================================*/
 
 program define indicators_ine, rclass
-syntax , weight(string) wlfvars(string)
+syntax , weight(string)
 
-* tempfile inefile
-tempname inef
+putmata y = welfare_ppp  if (welfare_ppp!=. & `weight'!=.) , replace
+putmata w = `weight' if (welfare_ppp!=. & `weight'!=.), replace
 
-postfile `inef' str20 welfarevar double valuesgini valuestheil /* 
- */  using __Iwildcard.dta, replace
+mata: st_local("_gini",strofreal(_ind_ine_gini(y,w)))
+mata: st_local("_theil",strofreal(_ind_ine_theil(y,w)))
 
-foreach wvar of local wlfvars { 
+return local _gini = `_gini'
+return local _theil = `_theil'
 
-	putmata y = `wvar'_ppp  if (`wvar'_ppp!=. & `weight'!=.) , replace
-	putmata w = `weight' if (`wvar'_ppp!=. & `weight'!=.), replace
-
-	mata: st_local("_gini",strofreal(_ind_ine_gini(y,w)))
-	mata: st_local("_theil",strofreal(_ind_ine_theil(y,w)))
-	
-	post `inef' ("`wvar'") (`_gini') (`_theil')
-
-}
-postclose `inef'
 end
 
 mata:

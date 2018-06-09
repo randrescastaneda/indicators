@@ -36,16 +36,16 @@ if (_rc) {
 	
 	* convert to long
 	if inlist("`calcset'", "ine", "shp") {
-		reshape long values, i(filename  datetime vc_* welfarevar) j(`case') string
-		order region countrycode year filename welfarevar `case' values
+		reshape long values, i(filename) j(`case') string
+		order region countrycode year filename `case' values
 	}
 	
 	else if ("`calcset'" == "pov") { // Poverty case
-		reshape long fgt0_ fgt1_ fgt2_, i(filename datetime vc_* welfarevar ) j(line)
+		reshape long fgt0_ fgt1_ fgt2_, i(filename date time vc_*) j(line)
 		rename fgt*_ fgt*
-		reshape long fgt, i(filename datetime vc_* welfarevar line) j(FGT)
+		reshape long fgt, i(filename line date time vc_*) j(FGT)
 		rename (FGT fgt) (fgt values)
-		order region countrycode year filename welfarevar line fgt values
+		order region countrycode year filename  line fgt values
 	}
 	
 	else {
