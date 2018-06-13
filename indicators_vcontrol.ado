@@ -41,18 +41,25 @@ qui {
 	}
 	
 	if ("`calcset'" == "wdi") {
-	
 		des, varlist
 		local wdivars = "`r(varlist)'"
 		foreach var of local wdivars {
+			if regexm("`var'", "vc_") continue
 			if regexm("`var'", "_") local indvars "`indvars' `var'"
 		}
-		
 		rename (`indvars') values=
-		reshape long values, i(countrycode year date time) j(wdi) string
+		
+		cap des vc_*, varlist
+		if (_rc ==0) local vcvars = "`r(varlist)'"
+		else         local vcvars = ""
+		reshape long values, i(countrycode year date time `vcvars') j(wdi) string
 		
 		sort countrycode year wdi values datetime
 		duplicates drop countrycode year wdi values, force
+		
+		duplicates tag countrycode year wdi datetime, gen(tag) 
+		keep if (tag == 0 | (tag > 0 & values == .))
+		drop tag
 		
 		
 		bysort countrycode year wdi: egen double `mdate' = max(datetime) 

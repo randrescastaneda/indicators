@@ -307,8 +307,8 @@ qui {
 				
 				copy __Iempty.dta __Iwildcard.dta, replace 
 				cap indicators_pov [aw = `weight'], plines("`plines'") /* 
-				 */  wlfvars(`wlfvars')
-				 
+				*/  wlfvars(`wlfvars')
+				
 				if (_rc) {
 					disp in red "Err calculating poverty"
 					post `ef' ("`region'") ("`countrycode'") ("`year'") ///
@@ -355,7 +355,7 @@ qui {
 						gen `var' = "``var''"
 					}
 					_gendatetime, date("`date'") time("`time'")
-										
+					
 					label var St60  "Sum of welfare of the Top 60"
 					label var Nt60  "No. of obs in the Top 60"
 					label var t60   "Mean welfare of Top 60"
@@ -491,47 +491,59 @@ qui {
 	====================================================================*/
 	
 	if (regexm("`calcset'", "wdi")) {
-		if regexm("`trace'", "wdi") set trace on 			
-		
-		cap {
+		local errwdi = 0
+		cap  {
 			*--------------------3.1: extract and save 
 			wbopendata, indicator(`wbodata') long clear nometadata
-			compress
+			compress			
+			
+			replace regioncode = "EAP" if regioncode == "EAS"
+			replace regioncode = "ECA" if regioncode == "ECS"
+			replace regioncode = "LAC" if regioncode == "LCN"
+			replace regioncode = "MNA" if regioncode == "MEA"
+			replace regioncode = "SAR" if regioncode == "SAS"
+			replace regioncode = "SSA" if regioncode == "SSF"
+			
+			
 			_gendatetime, date("`date'") time("`time'")
-			local basename "indicators_wdi"
-			local wdifile_wide "`out'/`basename'_wide.dta"
-			cap confirm new file "`wdifile_wide'"
-			if (_rc) append using "`wdifile_wide'"
-			
-			cap noi indicators_vcontrol wdi
-			if (_rc) {
-				disp in red "Err ine vcontrol"
-				post `ef' ("all") ("all") ("") ("") (52)
-			}
-			
-			local ivars "countrycode year datetime date time vc_*"
-			reshape wide values, i(`ivars') j(wdi) string
-			
-			order region* country* year date time datetime vc_*
-			awefe
-			*------------------3.2: Reshape -> long and Save
-			cap noi indicators_save wdi, basename(`basename') out("`out'") datetime(`datetime')
-			if (_rc) {
-				disp in red "Err ShP saving"
-				post `ef' ("all") ("all") ("") ("") (53)
-			}
-			
-		
-			if regexm("`trace'", "wdi") set trace off
 		}  // end of cap
-		*--------------------3.3: Errors
 		if (_rc) {
 			noi disp in red "Err extracting WDI info"
 			post `ef' ("ALL") ("ALL") ("ALL") ///
 			("wbopendata") (51)
 			error
 		}
-		else {
+		
+		if regexm("`trace'", "wdi") set trace on 			
+		local basename "indicators_wdi"
+		local wdifile_wide "`out'/`basename'_wide.dta"
+		cap confirm new file "`wdifile_wide'"
+		if (_rc) append using "`wdifile_wide'"
+		
+		
+		cap noi indicators_vcontrol wdi
+		if (_rc) {
+			disp in red "Err wdi vcontrol"
+			post `ef' ("all") ("all") ("") ("") (52)
+			local errwdi = 1
+		}
+		
+		local ivars "countrycode year datetime date time vc_*"
+		reshape wide values, i(`ivars') j(wdi) string
+		rename values* *
+		
+		order region* country* year date time datetime vc_*
+		*------------------3.2: Reshape -> long and Save
+		cap noi indicators_save wdi, basename(`basename') out("`out'") datetime(`datetime')
+		if (_rc) {
+			disp in red "Err ShP saving"
+			post `ef' ("all") ("all") ("") ("") (53)
+			local errwdi = 1
+		}
+		
+		if regexm("`trace'", "wdi") set trace off
+		*--------------------3.3: Errors
+		if (`errwdi' == 0) {
 			noi disp in y _n "`filename' WDI OK"
 			post `ef' ("ALL") ("ALL") ("ALL") ///
 			("wbopendata") (50)

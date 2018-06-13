@@ -56,9 +56,15 @@ qui {
 				if regexm("`var'", "vc_") continue
 				if regexm("`var'", "_") local indvars "`indvars' `var'"
 			}
-			
 			rename (`indvars') values=
-			reshape long values, i(regioncode countrycode year date time vc_*) j(wdi) string
+			
+			
+			
+			cap des vc_*, varlist
+			if (_rc ==0) local vcvars = "`r(varlist)'"
+			else         local vcvars = ""
+			
+			reshape long values, i(regioncode countrycode year date time vc_*) j(case) string
 		}
 		else {
 			disp as err "calculation invalid"
@@ -87,7 +93,10 @@ qui {
 		local sname "Shared Prosperity"
 		local disptab `"tabdisp year veralt case if (region == "\`regionp'" & inlist(case, "b40", "t60", "mean")), c(values) by(countryname) concise"'
 	}
-	
+	if ("`calcset'" == "wdi") {
+		local sname "WDI"
+		local disptab `"tabdisp year wdi if (regioncode == "\`regionp'" & inlist(wdi, "si_pov_nahc")), c(values) by(countryname) concise"'
+	}
 	
 	
 	noi disp in y _n `"{stata use "`out'/`basename'_long.dta": Load `sname' file}"'
@@ -110,5 +119,3 @@ Notes:
 
 
 Version Control:
-
-
