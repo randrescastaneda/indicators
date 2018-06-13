@@ -10,7 +10,7 @@ Creation Date:     1 Jun 2018 - 15:32:22
 ==================================================*/
 program define indicators_vcontrol, rclass
 
-syntax , vars(varlist)
+syntax [anything(name=calcset id="set of calculations")], [ vars(varlist) ]
 qui {
 	
 	/*==================================================
@@ -18,21 +18,47 @@ qui {
 	==================================================*/
 	
 	tempvar vermast veralt malt mdate mmst
-	foreach var in vermast veralt {
-		gen ``var'' = subinstr(upper(`var'), "V", "", .)
-		destring ``var'', replace
+	
+	if inlist("`calcset'", "", "pov", "ine", "shp") {
+		
+		foreach var in vermast veralt {
+			gen ``var'' = subinstr(upper(`var'), "V", "", .)
+			destring ``var'', replace
+		}
+		
+		bysort `vars': egen  `mmst' = max(`vermast')
+		replace `mmst' = cond(`mmst' == `vermast', 1, 0)
+		
+		bysort `vars': egen  `malt' = max(`veralt') if (`mmst' == 1)
+		replace `malt' = cond(`malt' == `veralt', 1, 0)
+		
+		
+		bysort `vars' filename: egen double `mdate' = max(datetime) if (`malt' == 1)
+		
+		replace `mdate' = cond(`mdate' == datetime & `malt' == 1, 1, 0) 
+		
+		
 	}
 	
-	bysort `vars': egen  `mmst' = max(`vermast')
-	replace `mmst' = cond(`mmst' == `vermast', 1, 0)
+	if ("`calcset'" == "wdi") {
 	
-	bysort `vars': egen  `malt' = max(`veralt') if (`mmst' == 1)
-	replace `malt' = cond(`malt' == `veralt', 1, 0)
-	
-	
-	bysort `vars' filename: egen double `mdate' = max(datetime) if (`malt' == 1)
-	
-	replace `mdate' = cond(`mdate' == datetime & `malt' == 1, 1, 0) 
+		des, varlist
+		local wdivars = "`r(varlist)'"
+		foreach var of local wdivars {
+			if regexm("`var'", "_") local indvars "`indvars' `var'"
+		}
+		
+		rename (`indvars') values=
+		reshape long values, i(countrycode year date time) j(wdi) string
+		
+		sort countrycode year wdi values datetime
+		duplicates drop countrycode year wdi values, force
+		
+		
+		bysort countrycode year wdi: egen double `mdate' = max(datetime) 
+		replace `mdate' = cond(`mdate' == datetime, 1, 0) 
+		
+	}
 	
 	local dt: disp %tdDDmonCCYY date("`c(current_date)'", "DMY")
 	* local dt: disp %tdDDMonCCYY date("12 May 2018", "DMY")
@@ -71,7 +97,7 @@ qui {
 			*/ _c " is the same as the one last time (`maxvc')" _n
 			exit
 		}
-	
+		
 	}
 	
 	rename `mdate' vc_`dt' 

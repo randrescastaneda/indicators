@@ -498,35 +498,30 @@ qui {
 			wbopendata, indicator(`wbodata') long clear nometadata
 			compress
 			_gendatetime, date("`date'") time("`time'")
-			local wdifile_wide "`out'\indicators_wdi_wide.dta"
+			local basename "indicators_wdi"
+			local wdifile_wide "`out'/`basename'_wide.dta"
 			cap confirm new file "`wdifile_wide'"
+			if (_rc) append using "`wdifile_wide'"
+			
+			cap noi indicators_vcontrol wdi
 			if (_rc) {
-				append using "`wdifile_wide'"
-				des, varlist
-				local wdivars = "`r(varlist)'"
-				local datetimevars "date time"
-				local wdivars: list wdivars - datetimevars
-				
-				sort `wdivars' date time
-				duplicates drop `wdivars', force
-			}
-			indicators_vcontrol, vars(region countrycode year)
-			
-			save "`wdifile_wide'", replace
-			
-			*------------------3.2: Reshape -> long
-			* Identify indicators vars
-			des, varlist
-			local wdivars = "`r(varlist)'"
-			foreach var of local wdivars {
-				if regexm("`var'", "_") local indvars "`indvars' `var'"
+				disp in red "Err ine vcontrol"
+				post `ef' ("all") ("all") ("") ("") (52)
 			}
 			
-			rename (`indvars') values=
-			reshape long values, i(regioncode countrycode year date time) j(wdi) string
+			local ivars "countrycode year datetime date time vc_*"
+			reshape wide values, i(`ivars') j(wdi) string
 			
-			save "`out'\indicators_wdi_long.dta", replace
+			order region* country* year date time datetime vc_*
+			awefe
+			*------------------3.2: Reshape -> long and Save
+			cap noi indicators_save wdi, basename(`basename') out("`out'") datetime(`datetime')
+			if (_rc) {
+				disp in red "Err ShP saving"
+				post `ef' ("all") ("all") ("") ("") (53)
+			}
 			
+		
 			if regexm("`trace'", "wdi") set trace off
 		}  // end of cap
 		*--------------------3.3: Errors
