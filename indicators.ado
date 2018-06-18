@@ -247,7 +247,7 @@ qui {
 			
 			** welfare type
 			
-			local welftype: _dta[welfaretype]     // if char exist
+			local welftype: char _dta[welfaretype]     // if char exist
 			if ("`welftype'" == "") {     
 				cap confirm var welfaretype         // if var exist
 				if (_rc) local welftype "Unknown"   // if var does not exist
