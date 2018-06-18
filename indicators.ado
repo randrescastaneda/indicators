@@ -83,7 +83,8 @@ qui {
 	local calcset = lower("`calcset'")
 	
 	if ("`welfarevars'" == "") {
-		local welfarevars "welfare welfshprosperity welfareused pcexp pcinc"
+		local welfarevars welfare welfshprosperity welfareused welfarenom /* 
+		*/   welfaredef welfareother pcexp pcinc
 	}
 	
 	
@@ -119,7 +120,7 @@ qui {
 	
 	use "`reporoot'\repo_`repository'.dta", clear
 	
-	drop if module == "L"  // Ask Minh what is L and whether this drop id OK
+	drop if module == "L"  // Ask Minh what is L and whether this drop is OK
 	
 	tostring _all, replace
 	order country years surveyid survname col module filename ///
@@ -244,6 +245,18 @@ qui {
 				continue
 			}
 			
+			** welfare type
+			
+			local welftype: _dta[welfaretype]     // if char exist
+			if ("`welftype'" == "") {     
+				cap confirm var welfaretype         // if var exist
+				if (_rc) local welftype "Unknown"   // if var does not exist
+				else {
+					local welftype = welfaretype[1]
+					if ("`welftype'" == "") local welftype "Unknown"
+				}
+			}
+			
 			**** treatment of weight variable
 			cap confirm var weight, exact 
 			if (_rc == 0) local weight weight
@@ -321,6 +334,10 @@ qui {
 					gen `var' = "``var''"
 				}
 				
+				gen welftype = "`welftype'"
+				replace welftype = "INC" if welfarevar == "pcinc"  
+				replace welftype = "EXP" if welfarevar == "pcexp"  
+				
 				_gendatetime, date("`date'") time("`time'")
 				
 				append using `wrkpov' 
@@ -354,6 +371,13 @@ qui {
 					foreach var of local vars {
 						gen `var' = "``var''"
 					}
+					
+					* Welfare type 
+					gen welftype = "`welftype'"
+					replace welftype = "INC" if welfarevar == "pcinc"  
+					replace welftype = "EXP" if welfarevar == "pcexp"  
+					
+					
 					_gendatetime, date("`date'") time("`time'")
 					
 					label var St60  "Sum of welfare of the Top 60"
