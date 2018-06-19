@@ -80,10 +80,10 @@ qui {
 	
 	drop _all
 	mat colname `Mkey' = p_190np p_190p p_320np p_320p /* 
-	*/            p_550np p_550p p_B40 p_T60 case byvar welfarevar 
+	*/            p_550np p_550p p_B40 p_T60 precase byvar welfarevar 
 	
 	svmat `Mkey', names(col)
-	tostring case byvar welfarevar, replace force
+	tostring precase byvar welfarevar, replace force
 	
 	* Add Labels
 	
@@ -101,7 +101,7 @@ qui {
 		replace byvar = "`byvar'" if byvar == "`i'"
 	}
 	
-	replace case = byvar+case
+	replace precase = byvar+precase
 	drop byvar
 	
 	save __Iwildcard.dta, replace
