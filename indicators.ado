@@ -49,7 +49,7 @@ if ("`reporoot'" == "") local reporoot "`out'"
 
 
 qui {
-	local sscados "groupfunction wbopendata quantiles"
+	local sscados "groupfunction wbopendata quantiles tabstatmat"
 	foreach ado of local sscados {
 		cap which `ado'
 		if (_rc) ssc install `ado'
@@ -67,6 +67,8 @@ qui {
 	local nummin    = 30
 	local vintage:  disp %tdD-m-CY date("`c(current_date)'", "DMY")
 	
+	local allind   "pov ine shp key"
+	local allind_: subinstr local allind " " "|", all
 	
 	*------------------  Conditions  ------------------
 	
@@ -133,6 +135,7 @@ qui {
 	* Countries
 	if ("`countries'" != "") {
 		local countrylist ""
+		local countries = upper("`countries'")
 		foreach country of local countries {
 			local countrylist `"`countrylist', "`country'""'
 		}
@@ -177,14 +180,18 @@ qui {
 	local vars countrycode year surveyid survname type module filename ///
 	latest region countryname vermast veralt
 	
-	
 	/*====================================================================
 	2: Poverty, Inequality and Shared Prosperity Calculations
 	====================================================================*/
 	
+	if (`n' == 0) {
+		noi disp in r "there is no data for the combination " _n /* 
+		 */  "`countries' "  _n "`years'"
+		 error
+		}
 	
-	if (regexm("`calcset'", "ine|pov|shp|all")) {
-		local wrkfiles "wrkpov wrkine wrkshp"
+	if (regexm("`calcset'", "`allind_'|all")) {
+		local wrkfiles "wrkpov wrkine wrkshp wrkkey"
 		tempfile `wrkfiles'  // working surveys file
 		
 		cap erase __Iempty.dta
@@ -200,10 +207,12 @@ qui {
 		local i = 0
 		while (`i' < `n') {
 			local ++i
-			set trace off
 			
 			*--------------------2.2: Load data
 			mata: _ind_ids(R)
+			
+			if ( "`calcset'" == "key" & !inlist("`module'", "ALL", "GPWG2")) continue
+			
 			noi disp in y _n `"datalibweb, country(`countrycode') year(`year') type(`type') fileserver filename(`filename') cpivintage(`cpivintage') nometa clear"'
 			cap datalibweb, country(`countrycode') year(`year') type(`type')  ///
 			fileserver filename(`filename') cpivintage(`cpivintage') nometa clear
@@ -372,24 +381,28 @@ qui {
 						gen `var' = "``var''"
 					}
 					
+					* rename variables for reshape
+					desc St60-t10, varlist
+					local vars2ren "`r(varlist)'"
+					rename (`vars2ren') values=
+					
+					_gendatetime, date("`date'") time("`time'")
+					
 					* Welfare type 
 					gen welftype = "`welftype'"
 					replace welftype = "INC" if welfarevar == "pcinc"  
 					replace welftype = "EXP" if welfarevar == "pcexp"  
 					
-					
-					_gendatetime, date("`date'") time("`time'")
-					
-					label var St60  "Sum of welfare of the Top 60"
-					label var Nt60  "No. of obs in the Top 60"
-					label var t60   "Mean welfare of Top 60"
-					label var Sb40  "Sum of welfare of the Bottom 40"
-					label var Nb40  "No. of obs in the Bottom 40"
-					label var b40   "Mean welfare of Bottom 40"
-					label var Smean "Sum of welfare of Tot. population"
-					label var Nmean "No. of obs in Tot. population"
-					label var mean  "Mean welfare of Tot. population"
-					label var t10   "Mean welfare of the Top 10"
+					label var valuesSt60  "Sum of welfare of the Top 60"
+					label var valuesNt60  "No. of obs in the Top 60"
+					label var valuest60   "Mean welfare of Top 60"
+					label var valuesSb40  "Sum of welfare of the Bottom 40"
+					label var valuesNb40  "No. of obs in the Bottom 40"
+					label var valuesb40   "Mean welfare of Bottom 40"
+					label var valuesSmean "Sum of welfare of Tot. population"
+					label var valuesNmean "No. of obs in Tot. population"
+					label var valuesmean  "Mean welfare of Tot. population"
+					label var valuest10   "Mean welfare of the Top 10"
 					
 					append using `wrkshp' 
 					save `wrkshp', replace 		
@@ -398,7 +411,49 @@ qui {
 					post `ef' ("`region'") ("`countrycode'") ("`year'") ///
 					("`filename'") (40)
 				}
-			}
+			} // end of SHP
+			set trace off
+			
+			**----------------- Key Indicators ------------------
+			if (regexm("`calcset'", "key|all")) {
+				if regexm("`trace'", "key|all") set trace on
+				
+				cap datasignature confirm  using `dtasign'
+				if (_rc) use `generalf', clear
+				
+				copy __Iempty.dta __Iwildcard.dta, replace 
+				cap noi indicators_key [aw = `weight'], wlfvars(`wlfvars') plines("`plines'")
+				
+				if (_rc) {
+					disp in red "Err key indicators"
+					post `ef' ("`region'") ("`countrycode'") ("`year'") ///
+					("`filename'") (61)
+					continue
+				}
+				else { // if not error
+					
+					use __Iwildcard.dta, clear
+					foreach var of local vars {
+						gen `var' = "``var''"
+					}
+					
+					* Welfare type 
+					gen welftype = "`welftype'"
+					replace welftype = "INC" if welfarevar == "pcinc"  
+					replace welftype = "EXP" if welfarevar == "pcexp"  
+					
+					_gendatetime, date("`date'") time("`time'")
+					
+					rename p_* values*
+					
+					append using `wrkkey' 
+					save `wrkkey', replace 		
+					
+					disp in y _n "`filename' key OK"
+					post `ef' ("`region'") ("`countrycode'") ("`year'") ///
+					("`filename'") (60)
+				}
+			} // end of key
 			set trace off
 			
 		} // end of surveys loop
@@ -406,109 +461,61 @@ qui {
 		*=============================================================
 		*========= poverty, Inequality, Shared Prosperity FILES ======
 		*=============================================================
-		
-		*------------------ Poverty  ---------------------
-		if (regexm("`calcset'", "pov|all")) {
-			if regexm("`trace'", "file|all") set trace on
-			use `wrkpov', clear
+		if (regexm("`calcset'", "`allind_'|all")) {       // only key indicators
+			if regexm("`trace'", "file|all") set trace on   // trace
 			
-			local basename "indicators_pov"
-			local povfile_wide "`out'/`basename'_wide.dta"
-			cap confirm new file "`povfile_wide'"
-			if (_rc) {
-				append using "`povfile_wide'"
-				replace welfarevar = "welfare" if welfarevar == "" 
-				local dropvars "region countrycode year filename welfarevar fgt* welfare_mean"
-				sort `dropvars' date time
-				duplicates drop `dropvars', force
-			}
+			if (regexm("`calcset'", "all")) local calcset "`allind'"  // remove all 
 			
-			cap noi indicators_vcontrol, vars(region countrycode year survname welfarevar)
-			if (_rc) {
-				disp in red "Err ine vcontrol"
-				post `ef' ("all") ("all") ("") ("") (32)
-			}
 			
-			cap noi indicators_save pov, basename(`basename') out("`out'") datetime(`datetime')
-			if (_rc) {
-				disp in red "Err ShP saving"
-				post `ef' ("all") ("all") ("") ("") (33)
-			}
+			foreach calc of local calcset {
+				if !regexm("`calc'", "`allind_'") continue   // make sure 'report' or other don't go
+				use `wrk`calc'', clear                      
+				
+				
+				local basename "indicators_`calc'"
+				local file_wide "`out'/`basename'_wide.dta"
+				cap confirm new file "`file_wide'"
+				if (_rc) {
+					append using "`file_wide'"
+					replace welfarevar = "welfare" if welfarevar == "" 
+					
+					* -----Indicator-specific conditions------
+					if ("`calc'" == "pov") {
+						local e = 3
+						local dropvars "region countrycode year filename welfarevar fgt* welfare_mean"
+					}
+					if inlist("`calc'", "ine", "shp", "key") {
+						if ("`calc'" == "ine") local e = 2
+						if ("`calc'" == "shp") local e = 4
+						if ("`calc'" == "key") local e = 6
+						local dropvars "region countrycode year filename welfarevar values*"
+					}
+					
+					* sort and drop suplicates
+					sort `dropvars' date time
+					duplicates drop `dropvars', force
+				}
+				
+				* Vintage control
+				cap noi indicators_vcontrol, vars(region countrycode year survname welfarevar)
+				if (_rc) {
+					disp in red "Err `calc' vcontrol"
+					post `ef' ("all") ("all") ("") ("") (`e'2)
+				}
+				
+				* save file 
+				cap noi indicators_save `calc', basename(`basename') out("`out'") /*  
+				 */  datetime(`datetime')
+				if (_rc) {
+					disp in red "Err `calc' saving"
+					post `ef' ("all") ("all") ("") ("") (`e'3)
+				}
+				
+			} // end of set of calculation loop 
+			
 		} // end pov file update section
 		set trace off
-		
-		
-		*------------------ Inequality ---------------------
-		if (regexm("`calcset'", "ine|all")) {
-			if regexm("`trace'", "file|all") set trace on
-			use `wrkine', clear
-			
-			local basename "indicators_ine"
-			local inefile_wide "`out'/`basename'_wide.dta"
-			cap confirm new file "`inefile_wide'"
-			if (_rc) {
-				append using "`inefile_wide'"
-				replace welfarevar = "welfare" if welfarevar == "" 
-				local dropvars "region countrycode year filename welfarevar values*"
-				sort `dropvars' date time
-				duplicates drop `dropvars', force
-			}
-			
-			cap noi indicators_vcontrol, vars(region countrycode year survname welfarevar)
-			if (_rc) {
-				disp in red "Err ine vcontrol"
-				post `ef' ("all") ("all") ("") ("") (22)
-			}
-			
-			cap noi indicators_save ine, basename(`basename') out("`out'") /* 
-			*/  datetime(`datetime') case(ineq)
-			if (_rc) {
-				disp in red "Err ShP saving"
-				post `ef' ("all") ("all") ("") ("") (23)
-			}
-		} // end of ine file update
-		set trace off
-		
-		*------------------ Shared prosperity ---------------------
-		if (regexm("`calcset'", "shp|all")) {
-			if regexm("`trace'", "file|all") set trace on
-			use `wrkshp', clear
-			
-			desc St60-t10, varlist
-			local vars2ren "`r(varlist)'"
-			rename (`vars2ren') values=
-			
-			local basename "indicators_shp"
-			local shpfile_wide "`out'/`basename'_wide.dta"
-			cap confirm new file "`shpfile_wide'"
-			if (_rc) {
-				append using "`shpfile_wide'"
-				replace welfarevar = "welfare" if welfarevar == "" 
-				local dropvars "region countrycode year filename welfarevar values*"
-				sort `dropvars' date time
-				duplicates drop `dropvars', force
-			}
-			
-			cap noi indicators_vcontrol, vars(region countrycode year survname welfarevar)
-			if (_rc) {
-				disp in red "Err ShP vcontrol"
-				post `ef' ("all") ("all") ("") ("") (42)
-			}
-			
-			cap noi indicators_save shp, basename(`basename') out("`out'") /* 
-			*/  datetime(`datetime') case(case)
-			if (_rc) {
-				disp in red "Err ShP saving"
-				post `ef' ("all") ("all") ("") ("") (43)
-			}
-			
-		} // end of shp file update
-		set trace off
-		
-		
-	}	// end of Poverty, Inequality, and Shared Prosperity
-	set trace off	
-	
+		}
 	
 	/*====================================================================
 	4: WDI
@@ -594,10 +601,12 @@ qui {
 	31  "Err in pov"  ///
 	41  "Err in shp"  ///
 	51  "Err in wdi"  ///
+	61  "Err in key"  ///
 	20  "OK ine"  ///
 	30  "OK pov"  ///
 	40  "OK shp"  ///
 	50  "OK wdi"  ///
+	60  "OK key"  ///
 	, modify
 	
 	label values comment comment
@@ -731,3 +740,121 @@ indicators pov, countr(HND) years(2012 2013)
 indicators ine, countr(HND) years(2012 2013) 
 
 * indicators pov, filename(PRY_2012_EPH_V01_M_V02_A_GMD_ALL.dta) trace(pov)
+
+
+
+
+
+
+
+
+
+/* 
+
+
+
+*------------------ Poverty  ---------------------
+if (regexm("`calcset'", "pov|all")) {
+if regexm("`trace'", "file|all") set trace on
+use `wrkpov', clear
+
+local basename "indicators_pov"
+local povfile_wide "`out'/`basename'_wide.dta"
+cap confirm new file "`povfile_wide'"
+if (_rc) {
+append using "`povfile_wide'"
+replace welfarevar = "welfare" if welfarevar == "" 
+local dropvars "region countrycode year filename welfarevar fgt* welfare_mean"
+sort `dropvars' date time
+duplicates drop `dropvars', force
+}
+
+cap noi indicators_vcontrol, vars(region countrycode year survname welfarevar)
+if (_rc) {
+disp in red "Err pov vcontrol"
+post `ef' ("all") ("all") ("") ("") (32)
+}
+
+cap noi indicators_save pov, basename(`basename') out("`out'") datetime(`datetime')
+if (_rc) {
+disp in red "Err pov saving"
+post `ef' ("all") ("all") ("") ("") (33)
+}
+} // end pov file update section
+set trace off
+
+
+*------------------ Inequality ---------------------
+if (regexm("`calcset'", "ine|all")) {
+if regexm("`trace'", "file|all") set trace on
+use `wrkine', clear
+
+local basename "indicators_ine"
+local inefile_wide "`out'/`basename'_wide.dta"
+cap confirm new file "`inefile_wide'"
+if (_rc) {
+append using "`inefile_wide'"
+replace welfarevar = "welfare" if welfarevar == "" 
+local dropvars "region countrycode year filename welfarevar values*"
+sort `dropvars' date time
+duplicates drop `dropvars', force
+}
+
+cap noi indicators_vcontrol, vars(region countrycode year survname welfarevar)
+if (_rc) {
+disp in red "Err ine vcontrol"
+post `ef' ("all") ("all") ("") ("") (22)
+}
+
+cap noi indicators_save ine, basename(`basename') out("`out'") /* 
+*/  datetime(`datetime') case(ineq)
+if (_rc) {
+disp in red "Err ine saving"
+post `ef' ("all") ("all") ("") ("") (23)
+}
+} // end of ine file update
+set trace off
+
+*------------------ Shared prosperity ---------------------
+if (regexm("`calcset'", "shp|all")) {
+if regexm("`trace'", "file|all") set trace on
+use `wrkshp', clear
+
+desc St60-t10, varlist
+local vars2ren "`r(varlist)'"
+rename (`vars2ren') values=
+
+local basename "indicators_shp"
+local shpfile_wide "`out'/`basename'_wide.dta"
+cap confirm new file "`shpfile_wide'"
+if (_rc) {
+append using "`shpfile_wide'"
+replace welfarevar = "welfare" if welfarevar == "" 
+local dropvars "region countrycode year filename welfarevar values*"
+sort `dropvars' date time
+duplicates drop `dropvars', force
+}
+
+cap noi indicators_vcontrol, vars(region countrycode year survname welfarevar)
+if (_rc) {
+disp in red "Err ShP vcontrol"
+post `ef' ("all") ("all") ("") ("") (42)
+}
+
+cap noi indicators_save shp, basename(`basename') out("`out'") /* 
+*/  datetime(`datetime') case(case)
+if (_rc) {
+disp in red "Err ShP saving"
+post `ef' ("all") ("all") ("") ("") (43)
+}
+
+} // end of shp file update
+set trace off
+
+
+}	// end of Poverty, Inequality, and Shared Prosperity
+set trace off	
+
+*/
+
+

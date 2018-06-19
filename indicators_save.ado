@@ -15,7 +15,7 @@ Output:             dta files
 ==================================================*/
 program define indicators_save
 syntax anything(name=calcset id="set of calculations"), ///
-basename(string) out(string) datetime(numlist) [case(string)]
+basename(string) out(string) datetime(numlist)
 
 
 /*==================================================
@@ -36,10 +36,24 @@ qui {
 		save "`out'/`basename'_wide.dta", replace
 		
 		* convert to long
+		*----- indicator-specific modifications -----------
 		if inlist("`calcset'", "ine", "shp") {
-			reshape long values, i(filename  datetime vc_* welfarevar) j(`case') string
-			order region countrycode year filename welfarevar `case' values
+			reshape long values, i(filename  datetime vc_* welfarevar) /* 
+			 */     j(case) string
+			
+			order region countrycode year filename welfarevar case values
 		}
+		
+		if inlist("`calcset'", "key") {
+			reshape long values, i(filename  datetime vc_* welfarevar precase) /* 
+			 */     j(case) string
+			
+			replace case = precase+case
+			drop precase
+			order region countrycode year filename welfarevar case values
+		}
+		
+		
 		
 		else if ("`calcset'" == "pov") { // Poverty case
 			reshape long fgt0_ fgt1_ fgt2_, i(filename datetime vc_* welfarevar ) j(line)
@@ -87,7 +101,7 @@ qui {
 	}
 	if ("`calcset'" == "ine") {
 		local sname "Inequality"
-		local disptab `"tabdisp year veralt ineq if (region == "\`regionp'"), c(values) by(countryname) concise"'
+		local disptab `"tabdisp year veralt case if (region == "\`regionp'"), c(values) by(countryname) concise"'
 	}
 	if ("`calcset'" == "shp") {
 		local sname "Shared Prosperity"
