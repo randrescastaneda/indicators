@@ -186,16 +186,13 @@ qui {
 	
 	if (`n' == 0) {
 		noi disp in r "there is no data for the combination " _n /* 
-		 */  "`countries' "  _n "`years'"
-		 error
-		}
+		*/  "`countries' "  _n "`years'"
+		error
+	}
 	
 	if (regexm("`calcset'", "`allind_'|all")) {
 		local wrkfiles "wrkpov wrkine wrkshp wrkkey"
 		tempfile `wrkfiles'  // working surveys file
-		
-		cap erase __Iempty.dta
-		cap erase __Iwildcard.dta
 		
 		drop _all
 		foreach wrkfile of local wrkfiles {
@@ -210,6 +207,10 @@ qui {
 			
 			*--------------------2.2: Load data
 			mata: _ind_ids(R)
+			noi disp in w _n "{dup 20:-} New survey"
+			foreach var of local vars {
+				noi disp in g `"`var' {col 15}= "' in y `" ``var''"' 
+			}
 			
 			if ( "`calcset'" == "key" & !inlist("`module'", "ALL", "GPWG2")) continue
 			
@@ -415,7 +416,7 @@ qui {
 			set trace off
 			
 			**----------------- Key Indicators ------------------
-			if (regexm("`calcset'", "key|all")) {
+			if (regexm("`calcset'", "key|all") & inlist("`module'", "ALL", "GPWG2")) {
 				if regexm("`trace'", "key|all") set trace on
 				
 				cap datasignature confirm  using `dtasign'
@@ -505,7 +506,7 @@ qui {
 				
 				* save file 
 				cap noi indicators_save `calc', basename(`basename') out("`out'") /*  
-				 */  datetime(`datetime')
+				*/  datetime(`datetime')
 				if (_rc) {
 					disp in red "Err `calc' saving"
 					post `ef' ("all") ("all") ("") ("") (`e'3)
@@ -515,7 +516,7 @@ qui {
 			
 		} // end pov file update section
 		set trace off
-		}
+	}
 	
 	/*====================================================================
 	4: WDI

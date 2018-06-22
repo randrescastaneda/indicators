@@ -15,7 +15,7 @@ qui {
 	
 	cap drop hhsize
 	ren hsize hhsize
-	sort  hhid relationharm  
+	sort  hhid
 	duplicates drop hhid , force		//MAKING it household level data
 	gen double popw `exp'*hhsize
 	
