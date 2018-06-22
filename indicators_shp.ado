@@ -14,7 +14,7 @@ Output:             __Iwildcard
 0: Program set up
 ==================================================*/
 program define indicators_shp, rclass
-syntax [aweight fweight pweight], wlfvars(string)
+syntax [aweight fweight pweight], wlfvars(string) wildcard(string)
 
 
 /*==================================================
@@ -24,7 +24,7 @@ syntax [aweight fweight pweight], wlfvars(string)
 tempname shpf
 
 postfile `shpf' str20 welfarevar double(St60 Nt60 t60 Sb40 Nb40 b40 Smean Nmean mean t10) /* 
-*/  using __Iwildcard.dta, replace
+*/  using `wildcard', replace
 
 foreach wvar of local wlfvars { 
 	

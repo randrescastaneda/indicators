@@ -7,7 +7,7 @@
 ====================================================================*/
 
 program define indicators_pov
-syntax [aweight fweight pweight], plines(string) wlfvars(string) 
+syntax [aweight fweight pweight], plines(string) wlfvars(string)  wildcard(string)
 
 foreach wvar of local wlfvars {
 	preserve 
@@ -26,8 +26,8 @@ foreach wvar of local wlfvars {
 	
 	gen welfarevar = "`wvar'"
 	
-	append using __Iwildcard
-	save __Iwildcard.dta, replace
+	append using `wildcard'
+	save `wildcard', replace
 	restore
 }  // end of welfare vars loop
 

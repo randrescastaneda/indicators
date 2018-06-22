@@ -192,13 +192,13 @@ qui {
 	
 	if (regexm("`calcset'", "`allind_'|all")) {
 		local wrkfiles "wrkpov wrkine wrkshp wrkkey"
-		tempfile `wrkfiles'  // working surveys file
+		tempfile `wrkfiles' empty wildcard // working surveys file
 		
 		drop _all
 		foreach wrkfile of local wrkfiles {
 			save ``wrkfile'', replace emptyok
 		}
-		save __Iempty, replace emptyok
+		save `empty', replace emptyok
 		
 		
 		local i = 0
@@ -223,7 +223,7 @@ qui {
 				("`filename'") (11)
 				continue
 			}
-			copy __Iempty.dta __Iwildcard.dta, replace 
+			copy `empty' `wildcard', replace 
 			
 			*--------------------2.3: check usability of survey
 			
@@ -294,8 +294,9 @@ qui {
 				cap datasignature confirm using `dtasign'
 				if (_rc) use `generalf', clear
 				
-				copy __Iempty.dta __Iwildcard.dta, replace 
-				cap indicators_ine, weight(`weight') wlfvars("`wlfvars'")
+				copy `empty' `wildcard', replace 
+				cap indicators_ine, weight(`weight') wlfvars("`wlfvars'") /* 
+				*/ wildcard("`wildcard'")
 				if (_rc) {
 					disp in red "Err calculating inequality"
 					post `ef' ("`region'") ("`countrycode'") ("`year'") ///
@@ -303,7 +304,7 @@ qui {
 					continue
 				}
 				else { // if no errors
-					use __Iwildcard.dta, clear
+					use `wildcard', clear
 					foreach var of local vars {
 						gen `var' = "``var''"
 					}
@@ -328,9 +329,9 @@ qui {
 				cap datasignature confirm  using `dtasign'
 				if (_rc) use `generalf', clear
 				
-				copy __Iempty.dta __Iwildcard.dta, replace 
+				copy `empty' `wildcard', replace 
 				cap indicators_pov [aw = `weight'], plines("`plines'") /* 
-				*/  wlfvars(`wlfvars')
+				*/  wlfvars(`wlfvars') wildcard("`wildcard'")
 				
 				if (_rc) {
 					disp in red "Err calculating poverty"
@@ -339,7 +340,7 @@ qui {
 					continue
 				}
 				
-				use __Iwildcard.dta, clear
+				use `wildcard', clear
 				foreach var of local vars {
 					gen `var' = "``var''"
 				}
@@ -366,8 +367,9 @@ qui {
 				cap datasignature confirm  using `dtasign'
 				if (_rc) use `generalf', clear
 				
-				copy __Iempty.dta __Iwildcard.dta, replace 
-				cap indicators_shp [aw = `weight'], wlfvars(`wlfvars')
+				copy `empty' `wildcard', replace 
+				cap indicators_shp [aw = `weight'], wlfvars(`wlfvars')  /*  
+				*/ wildcard("`wildcard'")
 				
 				if (_rc) {
 					disp in red "Err ShP"
@@ -377,7 +379,7 @@ qui {
 				}
 				else { // if not error
 					
-					use __Iwildcard.dta, clear
+					use `wildcard', clear
 					foreach var of local vars {
 						gen `var' = "``var''"
 					}
@@ -422,8 +424,9 @@ qui {
 				cap datasignature confirm  using `dtasign'
 				if (_rc) use `generalf', clear
 				
-				copy __Iempty.dta __Iwildcard.dta, replace 
-				cap noi indicators_key [aw = `weight'], wlfvars(`wlfvars') plines("`plines'")
+				copy `empty' `wildcard', replace 
+				cap noi indicators_key [aw = `weight'], wlfvars(`wlfvars') /* 
+				*/  plines("`plines'") wildcard("`wildcard'")
 				
 				if (_rc) {
 					disp in red "Err key indicators"
@@ -433,7 +436,7 @@ qui {
 				}
 				else { // if not error
 					
-					use __Iwildcard.dta, clear
+					use `wildcard', clear
 					foreach var of local vars {
 						gen `var' = "``var''"
 					}

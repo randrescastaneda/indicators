@@ -7,7 +7,7 @@
 ====================================================================*/
 
 program define indicators_key
-syntax [aweight fweight pweight], plines(string) wlfvars(string) 
+syntax [aweight fweight pweight], plines(string) wlfvars(string) wildcard(string)
 
 tempname Mkey // name of big matrix
 
@@ -105,7 +105,7 @@ qui {
 	replace precase = byvar+precase
 	drop byvar
 	
-	save __Iwildcard.dta, replace
+	save `wildcard', replace
 	
 } // end of qui
 

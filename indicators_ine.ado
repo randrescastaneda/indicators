@@ -7,13 +7,13 @@
 ====================================================================*/
 
 program define indicators_ine, rclass
-syntax , weight(string) wlfvars(string)
+syntax , weight(string) wlfvars(string) wildcard(string)
 
 * tempfile inefile
 tempname inef
 
 postfile `inef' str20 welfarevar double valuesgini valuestheil /* 
- */  using __Iwildcard.dta, replace
+ */  using "`wildcard'", replace
 
 foreach wvar of local wlfvars { 
 
