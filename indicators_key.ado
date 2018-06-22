@@ -23,15 +23,16 @@ qui {
 	cap gen rur=(urban==0) if urban!=.
 	
 	//Age groups
-	recode  age (0/14 = 1 gage1) (15/64 = 2 gage2) (65/max = 3 gage3) , gen(gage)
-	replace gage=. if age==.
+	recode  age (0/14 = 1 gag1) (15/64 = 2 gag2) (65/max = 3 gag3) , gen(gag)
+	replace gag=. if age==.
 	
 	clonevar edu = educat4
 	replace edu = . if edu!=. & (age<16 | age==.)
 	
 	* lab def males 0 "ggender" 1 "ggender1"
 	* lab val male males
-	local byvars rur male gage edu
+	rename male gen
+	local byvars rur gen gag edu
 	
 	local w = 0
 	foreach wvar of local wlfvars {
@@ -79,8 +80,8 @@ qui {
 	}  // end of welfare vars loop
 	
 	drop _all
-	mat colname `Mkey' = p_190np p_190p p_320np p_320p /* 
-	*/            p_550np p_550p p_B40 p_T60 precase byvar welfarevar 
+	mat colname `Mkey' = p_190np p_190p_ p_320np p_320p_ /* 
+	*/            p_550np p_550p_ p_B40__ p_T60__ precase byvar welfarevar 
 	
 	svmat `Mkey', names(col)
 	tostring precase byvar welfarevar, replace force
