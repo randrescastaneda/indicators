@@ -38,7 +38,8 @@ createrepo                          ///
 save                                ///
 noSHOW                              ///
 clear                               ///
-WELFAREvars(string)                  ///
+WELFAREvars(string)                 ///
+newonly                             ///
 ]
 
 
@@ -139,9 +140,11 @@ qui {
 		
 		use "`reporoot'\repo_vc_`repository'.dta", clear
 		merge 1:1 surveyid module using "`reporoot'\repo_`repository'.dta"
+		
 		cap confirm new var vc_`dt'
 		if (_rc) drop vc_`dt'
-		recode _merge (1 = 0) (2 3 = 1), gen(vc_`dt')
+		recode _merge (1 = 0 "old") (3 = 1 "same") (2 = 2 "new"), gen(vc_`dt')
+		
 		drop _merge
 		save "`reporoot'\repo_vc_`repository'.dta", replace
 		exit
@@ -180,8 +183,7 @@ qui {
 			error
 		}
 		confirm var vc_`vcdate'
-		
-		keep if vc_`vcdate' == 1
+		local maxvc "vc_`vcdate'"
 	}
 	else { // max date
 			
@@ -193,9 +195,21 @@ qui {
 			local maxvc: disp %tdDDmonCCYY `vcnumbers'
 		}
 		local maxvc = "vc_" + trim("`maxvc'")
-		
-		keep if `maxvc' == 1
 	}
+	
+	keep if inlist(`maxvc', 1, 2)
+	
+	* New surveys only
+	if ("`newonly'" == "newonly") {
+		keep if `maxvc' == 2
+		count
+		if r(N) == 0 {
+			noi disp in r "No new surveys in repository. " _n ///
+			" There might be, though, surveys that have been updated."
+			error
+		}
+	}
+	
 	
 	* remove unnecessary information
 	keep if inlist(module, "ALL", "GPWG", "GPWG2")  // Ask Minh 
