@@ -198,7 +198,7 @@ qui {
 	}
 	
 	* remove unnecessary information
-	drop if module == "L"  // Ask Minh what is L and whether this drop is OK
+	keep if inlist(module, "ALL", "GPWG", "GPWG2")  // Ask Minh 
 	
 	tostring _all, replace
 	order country years surveyid survname col module filename ///
