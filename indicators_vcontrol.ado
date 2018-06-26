@@ -98,7 +98,8 @@ qui {
 	else local maxvc ""
 	
 	if ("`maxvc'" != "") {
-		cap assert `maxvc' == `mdate' if !missing(`maxvc', `mdate')
+		* cap assert `maxvc' == `mdate' if !missing(`maxvc', `mdate')
+		cap assert `maxvc' == `mdate' if `mdate' == 1
 		if (_rc == 0) {
 			noi disp "{ul:NOTE:} Vintage control variable for today (vc_`dt')" /* 
 			*/ _c " is the same as the one last time (`maxvc')" _n
