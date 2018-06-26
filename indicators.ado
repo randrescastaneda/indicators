@@ -23,15 +23,16 @@ COUNtries(string)                   ///
 Years(numlist)                      ///
 REGions(string)                     ///
 FILENames(string)                   ///
-REPOsitory(passthru)                ///
+REPOsitory(string)                  ///
 reporoot(string)                    ///
-MODule(passthru)                    ///
+MODule(string)                      ///
 plines(string)                      ///
 cpivintage(string)                  ///
 veralt(string)                      ///
 vermast(string)                     ///
 trace(string)                       ///
 WBOdata(string)                     ///
+vcdate(string)                      ///
 replace                             ///
 createrepo                          ///
 save                                ///
@@ -42,6 +43,7 @@ WELFAREvars(string)                  ///
 
 
 drop _all
+pause on
 * Directory Paths
 
 local out         "\\wbgfscifs01\GTSD\02.core_team\02.data\01.Indicators"
@@ -113,15 +115,89 @@ qui {
 	====================================================================*/
 	
 	*--------------------1.1: Load repository data
-	if ("`createrepo'" != "") {
+	if ("`createrepo'" != "" & "`calcset'" == "repo") {
+		
+		local dt: disp %tdDDmonCCYY date("`c(current_date)'", "DMY")
+		local dt = trim("`dt'")
+		
 		cap datalibweb, repo(erase `repository', force) reporoot("`reporoot'") type(GMD)
 		datalibweb, repo(create `repository') reporoot("`reporoot'") /* 
 		*/         type(GMD) country(`countries') year(`years')       /* 
 		*/         region(`regions') module(`module')
+		
+		noi disp "repo `repository' has been created successfully."
+		
+		* confirm file exists
+		cap confirm file "`reporoot'\repo_vc_`repository'.dta"
+		if (_rc) {
+			use "`reporoot'\repo_`repository'.dta", clear
+			gen vc_`dt' = 1
+			save "`reporoot'\repo_vc_`repository'.dta", replace
+			noi disp "repo_vc_`repository' successfully updated"
+			exit 
+		}
+		
+		use "`reporoot'\repo_vc_`repository'.dta", clear
+		merge 1:1 surveyid module using "`reporoot'\repo_`repository'.dta"
+		cap confirm new var vc_`dt'
+		if (_rc) drop vc_`dt'
+		recode _merge (1 = 0) (2 3 = 1), gen(vc_`dt')
+		drop _merge
+		save "`reporoot'\repo_vc_`repository'.dta", replace
+		exit
 	}
 	
-	use "`reporoot'\repo_`repository'.dta", clear
+	use "`reporoot'\repo_vc_`repository'.dta", clear
 	
+	* ----Keep most recent repo or whatever the user selects -----------------------
+	
+	des vc_*, varlist
+	local dates = "`r(varlist)'"
+	local dates: subinstr local dates "vc_" "", all
+	
+	local vcnumbers ""
+	foreach date of local dates {
+		local vcnumbers "`vcnumbers' `=date("`date'", "DMY")'"
+	}
+	local vcnumbers = trim("`vcnumbers'")
+	
+	* display dates 
+	local vcnumbers: list sort vcnumbers
+	noi disp in y "list of available vintage control dates"
+	local i = 0
+	foreach vc of local vcnumbers {
+		local ++i
+		if (length("`i'") < 2 ) local i = "0`i'"
+		local dispdate: disp %tdDDmonCCYY `vc'
+		noi disp `"   `i' {c |} `=trim("`dispdate'")'"'
+	}
+	
+	if ("`vcdate'" != "") { // date selected by the user
+		if (!regexm("`vcdate'", "^[0-9]+[a-z]+[0-9]+$") | length("`vcdate'")!= 9) {
+			local datesample: disp %tdDDmonCCYY date("`c(current_date)'", "DMY")
+			noi disp as err "vcdate() format must be %tdDDmonCCYY, e.g " _c /* 
+			*/ `"{cmd:`=trim("`datesample'")'}"' _n
+			error
+		}
+		confirm var vc_`vcdate'
+		
+		keep if vc_`vcdate' == 1
+	}
+	else { // max date
+			
+		if (wordcount("`vcnumbers'") >1) {
+			local vcnumbers: subinstr local vcnumbers " " ", ", all
+			local maxvc: disp %tdDDmonCCYY max(`vcnumbers')
+		}
+		else {
+			local maxvc: disp %tdDDmonCCYY `vcnumbers'
+		}
+		local maxvc = "vc_" + trim("`maxvc'")
+		
+		keep if `maxvc' == 1
+	}
+	
+	* remove unnecessary information
 	drop if module == "L"  // Ask Minh what is L and whether this drop is OK
 	
 	tostring _all, replace
