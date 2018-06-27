@@ -41,6 +41,7 @@ clear                               ///
 WELFAREvars(string)                 ///
 newonly                             ///
 noi                                 ///
+load  shape(string)                 ///
 ]
 
 
@@ -53,6 +54,28 @@ if ("`reporoot'" == "") local reporoot "`out'"
 
 
 qui {
+	
+	/*====================================================================
+	Load files
+	====================================================================*/
+	
+	if ("`load'" == "load") {
+		if wordcount("`calcset'") != 1 {
+			noi disp in red "Only one file can be loaded"
+			error
+		}
+		if ("`shape'" == "") local shape "wide"
+		if !inlist("`shape'", "wide", "long") {
+			noi disp in r "shape can me wide or long only"
+		}
+		use "`out'/indicators_`calcset'_`shape'.dta", clear
+		exit
+	}
+	
+	/*====================================================================
+	Conditions
+	====================================================================*/
+	
 	local sscados "groupfunction wbopendata quantiles tabstatmat"
 	foreach ado of local sscados {
 		cap which `ado'
@@ -187,7 +210,7 @@ qui {
 		local maxvc "vc_`vcdate'"
 	}
 	else { // max date
-			
+		
 		if (wordcount("`vcnumbers'") >1) {
 			local vcnumbers: subinstr local vcnumbers " " ", ", all
 			local maxvc: disp %tdDDmonCCYY max(`vcnumbers')
@@ -224,7 +247,16 @@ qui {
 	*--------------------1.2: Condition to filter data
 	
 	* Countries
-	if ("`countries'" != "") {
+	if ("`countries'" == "" & "`regions'" == "" ) {
+		noi disp in r "You must select either countries() or regions()"
+		error
+	}
+	if ("`countries'" != "" & "`regions'" != "" ) {
+		noi disp in r "you must select either countries() or regions()"
+		error
+	}
+	
+	if (lower("`countries'") != "all" & "`regions'" == "" ) {
 		local countrylist ""
 		local countries = upper("`countries'")
 		foreach country of local countries {
