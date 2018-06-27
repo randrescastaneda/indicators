@@ -40,6 +40,7 @@ noSHOW                              ///
 clear                               ///
 WELFAREvars(string)                 ///
 newonly                             ///
+noi                                 ///
 ]
 
 
@@ -420,7 +421,7 @@ qui {
 				if (_rc) use `generalf', clear
 				
 				copy `empty' `wildcard', replace 
-				cap indicators_pov [aw = `weight'], plines("`plines'") /* 
+				cap `noi' indicators_pov [aw = `weight'], plines("`plines'") /* 
 				*/  wlfvars(`wlfvars') wildcard("`wildcard'")
 				
 				if (_rc) {
@@ -576,7 +577,7 @@ qui {
 					* -----Indicator-specific conditions------
 					if ("`calc'" == "pov") {
 						local e = 3
-						local dropvars "region countrycode year filename welfarevar fgt* welfare_mean"
+						local dropvars "region countrycode year filename welfarevar fgt*"
 					}
 					if inlist("`calc'", "ine", "shp", "key") {
 						if ("`calc'" == "ine") local e = 2
@@ -832,6 +833,11 @@ indicators all, countr(PRY ALB) years(2012 2013)
 
 indicators pov, countr(HND) years(2012 2013) 
 indicators ine, countr(HND) years(2012 2013) 
+
+indicators pov
+indicators ine
+indicators shp
+indicators key
 
 * indicators pov, filename(PRY_2012_EPH_V01_M_V02_A_GMD_ALL.dta) trace(pov)
 

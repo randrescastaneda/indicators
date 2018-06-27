@@ -9,29 +9,45 @@
 program define indicators_pov
 syntax [aweight fweight pweight], plines(string) wlfvars(string)  wildcard(string)
 
+tempname Mt Mfgt
+pause on 
+
+local  w = 0
 foreach wvar of local wlfvars {
-	preserve 
+	local ++w
 	foreach ll of local plines	{
 		forval a=0/2	{
-			gen fgt`a'_`=100*`ll'' = 100*((`wvar'_ppp<`ll')*(1-(`wvar'_ppp/`ll'))^`a')
+			gen fgt`a'_`=100*`ll''_`wvar' = 100*((`wvar'_ppp<`ll')*(1-(`wvar'_ppp/`ll'))^`a')
 		}
 	}
 	
-	gen one = 1
-	groupfunction [`weight'`exp'], mean(fgt* cpi2011 icp2011 `wvar'_ppp) by(one)
-	drop one
+	local fgts "fgt0*_`wvar' fgt1*_`wvar' fgt2*_`wvar'"
 	
-	rename `wvar'_ppp welfare_mean
-	label var welfare_mean "Welfare mean dollar a day (2011 PPP)"
+	tabstat `fgts' [`weight'`exp'], save 
+	tabstatmat `Mt',  nototal
 	
-	gen welfarevar = "`wvar'"
+	mat `Mfgt' = nullmat(`Mfgt') \ `w',`Mt'
 	
-	append using `wildcard'
-	save `wildcard', replace
-	restore
 }  // end of welfare vars loop
 
+drop _all
 
+mat colname `Mfgt' = welfarevar fgt0_190 fgt0_320  fgt0_550 /* 
+ */                             fgt1_190 fgt1_320  fgt1_550 /* 
+ */                             fgt2_190 fgt2_320  fgt2_550  
+
+svmat `Mfgt', names(col)
+tostring welfarevar, replace force
+
+* Add welfare var Labels
+
+local i = 0
+foreach wvar of local wlfvars {
+	local ++i
+	replace welfarevar = "`wvar'" if welfarevar == "`i'"
+}
+
+save `wildcard', replace
 end
 
 
