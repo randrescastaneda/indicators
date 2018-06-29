@@ -35,29 +35,45 @@ qui {
 		save "`out'/_vintage/`basename'_`datetime'.dta"
 		save "`out'/`basename'_wide.dta", replace
 		
-		* convert to long
+		
+		
+		*------------------------------------------------
+		*------------ convert to long--------------------
+		*------------------------------------------------
+		
+		*------ Remove all vc_ but the last one. 
+		indicators_vcselect, maxdate
+		local vcvar = "`r(maxdate)'" 
+		keep if `vcvar' == 1
+		
+		desc vc_*, varlist
+		local vclist = "`r(varlist)'"
+		local vclist: list vclist - vcvar
+		drop `vclist'
+		
+		
 		*----- indicator-specific modifications -----------
 		if inlist("`calcset'", "ine", "shp") {
 			reshape long values, i(filename  datetime vc_* welfarevar) /* 
-			 */     j(case) string
+			*/     j(case) string
 			
 			order region countrycode year filename welfarevar case values
 		}
 		
 		if inlist("`calcset'", "key") {
 			reshape long values, i(filename  datetime vc_* welfarevar precase) /* 
-			 */     j(case) string
+			*/     j(case) string
 			
 			replace case = precase+case
 			drop precase
 			order region countrycode year filename welfarevar case values
 		}
 		
-		
-		
 		else if ("`calcset'" == "pov") { // Poverty case
+			
 			reshape long fgt0_ fgt1_ fgt2_, i(filename datetime vc_* welfarevar ) j(line)
 			rename fgt*_ fgt*
+			
 			reshape long fgt, i(filename datetime vc_* welfarevar line) j(FGT)
 			rename (FGT fgt) (fgt values)
 			order region countrycode year filename welfarevar line fgt values
@@ -85,10 +101,10 @@ qui {
 			error
 		}
 		
-		save "`out'/`basename'_long.dta", replace
+	save "`out'/`basename'_long.dta", replace
 	}
 	else {
-		noi disp "files `basename'* are identical to last version"
+	noi disp "files `basename'* are identical to last version"
 	}
 	
 	
@@ -96,40 +112,41 @@ qui {
 	local regionsp "EAP ECA LAC MNA SAR SSA"
 	
 	if ("`calcset'" == "pov") {
-		local sname "Poverty"
-		local disptab `"tabdisp year veralt line if (fgt == 0 & region == "\`regionp'"), c(values) by(countryname) concise"'
+	local sname "Poverty"
+	local disptab `"tabdisp year veralt line if (fgt == 0 & region == "\`regionp'"), c(values) by(countryname) concise"'
 	}
 	if ("`calcset'" == "ine") {
-		local sname "Inequality"
-		local disptab `"tabdisp year veralt case if (region == "\`regionp'"), c(values) by(countryname) concise"'
+	local sname "Inequality"
+	local disptab `"tabdisp year veralt case if (region == "\`regionp'"), c(values) by(countryname) concise"'
 	}
 	if ("`calcset'" == "shp") {
-		local sname "Shared Prosperity"
-		local disptab `"tabdisp year veralt case if (region == "\`regionp'" & inlist(case, "b40", "t60", "mean")), c(values) by(countryname) concise"'
+	local sname "Shared Prosperity"
+	local disptab `"tabdisp year veralt case if (region == "\`regionp'" & inlist(case, "b40", "t60", "mean")), c(values) by(countryname) concise"'
 	}
 	if ("`calcset'" == "wdi") {
-		local sname "WDI"
-		local disptab `"tabdisp year wdi if (regioncode == "\`regionp'" & inlist(wdi, "si_pov_nahc")), c(values) by(countryname) concise"'
+	local sname "WDI"
+	local disptab `"tabdisp year wdi if (regioncode == "\`regionp'" & inlist(wdi, "si_pov_nahc")), c(values) by(countryname) concise"'
 	}
 	
 	
 	noi disp in y _n `"{stata use "`out'/`basename'_long.dta": Load `sname' file}"'
 	foreach regionp of local regionsp {
-		noi disp in y _n `"{stata `disptab':    `regionp'}"'
+	noi disp in y _n `"{stata `disptab':    `regionp'}"'
 	} // end of regions loop
 	
 	
-}
-end
-exit
-/* End of do-file */
-
-><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
-
-Notes:
-1.
-2.
-3.
-
-
-Version Control:
+	}
+	end
+	exit
+	/* End of do-file */
+	
+	><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
+	
+	Notes:
+	1.
+	2.
+	3.
+	
+	
+	Version Control:
+		
