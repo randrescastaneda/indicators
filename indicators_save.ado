@@ -15,7 +15,7 @@ Output:             dta files
 ==================================================*/
 program define indicators_save
 syntax anything(name=calcset id="set of calculations"), ///
-basename(string) out(string) datetime(numlist)
+basename(string) out(string) datetime(numlist) force
 
 
 /*==================================================
@@ -24,18 +24,16 @@ basename(string) out(string) datetime(numlist)
 qui {
 	cap noi datasignature confirm using /* 
 	*/    "`out'/_datasignature/`basename'", strict
-	if (_rc) {
+	if (_rc | "`force'" == "force") {
 		* Set signature
-		cap noi datasignature set, reset /* 
+		noi datasignature set, reset /* 
 		*/    saving("`out'/_datasignature/`basename'", replace)
-		cap noi datasignature set, reset /* 
-		*/    saving("`out'/_datasignature/`basename'_`datetime'")
+		noi datasignature set, reset /* 
+		*/    saving("`out'/_datasignature/`basename'_`datetime'", replace)
 		
 		* save files
-		save "`out'/_vintage/`basename'_`datetime'.dta"
+		save "`out'/_vintage/`basename'_`datetime'.dta", replace
 		save "`out'/`basename'_wide.dta", replace
-		
-		
 		
 		*------------------------------------------------
 		*------------ convert to long--------------------
