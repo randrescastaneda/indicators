@@ -152,10 +152,28 @@ qui {
 		
 		noi disp "repo `repository' has been created successfully."
 		
+		use "`reporoot'\repo_`repository'.dta", clear
+		
+		* Fix names of surveyid and files
+		local repovars filename surveyid
+		foreach var of local repovars {
+			replace `var' = upper(`var')
+			replace `var' = subinstr(`var', ".DTA", ".dta", .)
+			foreach x in 0 1 2 {
+				while regexm(`var', "_V`x'") {
+					replace `var' = regexr(`var', "_V`x'", "_v`x'")
+				}	
+			}
+		}
+		duplicates drop filename, force
+		
+		save "`reporoot'\repo_`repository'.dta", replace
+		
 		* confirm file exists
 		cap confirm file "`reporoot'\repo_vc_`repository'.dta"
 		if (_rc) {
 			use "`reporoot'\repo_`repository'.dta", clear
+			
 			gen vc_`dt' = 1
 			save "`reporoot'\repo_vc_`repository'.dta", replace
 			noi disp "repo_vc_`repository' successfully updated"
@@ -163,11 +181,35 @@ qui {
 		}
 		
 		use "`reporoot'\repo_vc_`repository'.dta", clear
-		merge 1:1 surveyid module using "`reporoot'\repo_`repository'.dta"
+		
+		* Fix names of surveyid and files
+		local repovars filename surveyid
+		foreach var of local repovars {
+			replace `var' = upper(`var')
+			replace `var' = subinstr(`var', ".DTA", ".dta", .)
+			foreach x in 0 1 2 {
+				while regexm(`var', "_V`x'") {
+					replace `var' = regexr(`var', "_V`x'", "_v`x'")
+				}	
+			}
+		}
+		duplicates drop filename, force
+		
+		merge 1:1 filename using "`reporoot'\repo_`repository'.dta"
 		
 		cap confirm new var vc_`dt'
 		if (_rc) drop vc_`dt'
 		recode _merge (1 = 0 "old") (3 = 1 "same") (2 = 2 "new"), gen(vc_`dt')
+		sum vc_`dt', meanonly
+		if r(mean) == 1 {
+			noi disp in r "variable {cmd:vc_`dt'} is the same as previous version. No update"
+			drop vc_`dt' _merge
+			error
+		}
+		else {
+			noi disp in y "New vintages:"
+			list filename if vc_`dt' == 2
+		}
 		
 		drop _merge
 		save "`reporoot'\repo_vc_`repository'.dta", replace
@@ -621,6 +663,18 @@ qui {
 					* sort and drop suplicates
 					sort `dropvars' date time
 					duplicates drop `dropvars', force
+				}
+				
+				* Fix names of surveyid and files
+				local repovars filename
+				foreach var of local repovars {
+					replace `var' = upper(`var')
+					replace `var' = subinstr(`var', ".DTA", ".dta", .)
+					foreach x in 0 1 2 {
+						while regexm(`var', "_V`x'") {
+							replace `var' = regexr(`var', "_V`x'", "_v`x'")
+						}	
+					}
 				}
 				
 				* Vintage control

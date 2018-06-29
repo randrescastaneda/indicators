@@ -13,6 +13,7 @@ program define indicators_vcontrol, rclass
 syntax [anything(name=calcset id="set of calculations")], [ vars(varlist) ]
 qui {
 	
+	pause on 
 	/*==================================================
 	1: Vintage Control Variables
 	==================================================*/
@@ -36,7 +37,6 @@ qui {
 		bysort `vars' filename: egen double `mdate' = max(datetime) if (`malt' == 1)
 		
 		replace `mdate' = cond(`mdate' == datetime & `malt' == 1, 1, 0) 
-		
 		
 	}
 	
