@@ -15,7 +15,7 @@ Output:             dta files
 ==================================================*/
 program define indicators_save
 syntax anything(name=calcset id="set of calculations"), ///
-basename(string) out(string) datetime(numlist) force
+basename(string) out(string) datetime(numlist) [ force ]
 
 
 /*==================================================
