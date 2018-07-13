@@ -40,7 +40,7 @@ noSHOW                              ///
 clear                               ///
 WELFAREvars(string)                 ///
 newonly                             ///
-noi                                 ///
+noi  gpwg2                          ///
 load  shape(string)                 ///
 ]
 
@@ -142,6 +142,11 @@ qui {
 	*--------------------1.1: Load repository data
 	if ("`createrepo'" != "" & "`calcset'" == "repo") {
 		
+		cap confirm file "`reporoot'\repo_gpwg2.dta"
+		if ("`gpwg2'" == "gpwg2" | _rc) {
+				indicators_gpwg2, out("`out'") datetime(`datetime')
+		}
+		
 		local dt: disp %tdDDmonCCYY date("`c(current_date)'", "DMY")
 		local dt = trim("`dt'")
 		
@@ -153,6 +158,8 @@ qui {
 		noi disp "repo `repository' has been created successfully."
 		
 		use "`reporoot'\repo_`repository'.dta", clear
+		append using "`reporoot'\repo_gpwg2.dta"
+		
 		
 		* Fix names of surveyid and files
 		local repovars filename surveyid
@@ -172,8 +179,6 @@ qui {
 		* confirm file exists
 		cap confirm file "`reporoot'\repo_vc_`repository'.dta"
 		if (_rc) {
-			use "`reporoot'\repo_`repository'.dta", clear
-			
 			gen vc_`dt' = 1
 			save "`reporoot'\repo_vc_`repository'.dta", replace
 			noi disp "repo_vc_`repository' successfully updated"
@@ -208,7 +213,7 @@ qui {
 		}
 		else {
 			noi disp in y "New vintages:"
-			list filename if vc_`dt' == 2
+			noi list filename if vc_`dt' == 2
 		}
 		
 		drop _merge
@@ -278,7 +283,7 @@ qui {
 	
 	
 	* remove unnecessary information
-	keep if inlist(module, "ALL", "GPWG", "GPWG2")  // Ask Minh 
+	keep if inlist(module, "ALL", "GPWG", "UDB-C")  // Ask Minh 
 	
 	tostring _all, replace
 	order country years surveyid survname col module filename ///
