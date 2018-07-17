@@ -56,23 +56,6 @@ if ("`reporoot'" == "") local reporoot "`out'"
 qui {
 	
 	/*====================================================================
-	Load files
-	====================================================================*/
-	
-	if ("`load'" == "load") {
-		if wordcount("`calcset'") != 1 {
-			noi disp in red "Only one file can be loaded"
-			error
-		}
-		if ("`shape'" == "") local shape "wide"
-		if !inlist("`shape'", "wide", "long") {
-			noi disp in r "shape can me wide or long only"
-		}
-		use "`out'/indicators_`calcset'_`shape'.dta", clear
-		exit
-	}
-	
-	/*====================================================================
 	Conditions
 	====================================================================*/
 	
@@ -80,10 +63,13 @@ qui {
 	foreach ado of local sscados {
 		cap which `ado'
 		if (_rc) ssc install `ado'
-		else adoupdate `ado', ssconly 
-		if ("`r(pkglist)'" != "") adoupdate `ado', update
+		local adoupdate "`adoupdate' `ado'"
 	}
 	
+	if ("`adoupdate'" != "") 	{
+		adoupdate `adoupdate', ssconly 		
+		if ("`r(pkglist)'" != "") adoupdate `r(pkglist)', update
+	}
 	
 	*------------------ Initial Parameters  ------------------
 	local date      = c(current_date)
@@ -117,6 +103,29 @@ qui {
 	}
 	
 	
+	/*====================================================================
+	Load files
+	====================================================================*/
+	
+	if ("`load'" == "load") {
+		if wordcount("`calcset'") != 1 {
+			noi disp in red "Only one file can be loaded"
+			error
+		}
+		if ("`calcset'" == "repo") {
+			use "`reporoot'\repo_vc_`repository'.dta", clear
+			noi disp "repo_vc_`repository'.dta loaded"
+			exit
+		}
+		if ("`shape'" == "") local shape "wide"
+		if !inlist("`shape'", "wide", "long") {
+			noi disp in r "shape can me wide or long only"
+		}
+		use "`out'/indicators_`calcset'_`shape'.dta", clear
+		noi disp "indicators_`calcset'_`shape'.dta loaded"
+		exit
+	}
+	
 	
 	/*====================================================================
 	REPORT
@@ -127,7 +136,6 @@ qui {
 		exit
 	}
 	
-	
 	*--------------- Post file creation-----------------
 	tempname ef
 	tempfile errfile
@@ -136,7 +144,7 @@ qui {
 	
 	
 	/*====================================================================
-	1:  Create repository
+	1.1  Create repository
 	====================================================================*/
 	
 	*--------------------1.1: Load repository data
@@ -144,7 +152,7 @@ qui {
 		
 		cap confirm file "`reporoot'\repo_gpwg2.dta"
 		if ("`gpwg2'" == "gpwg2" | _rc) {
-				indicators_gpwg2, out("`out'") datetime(`datetime')
+			indicators_gpwg2, out("`out'") datetime(`datetime')
 		}
 		
 		local dt: disp %tdDDmonCCYY date("`c(current_date)'", "DMY")
@@ -220,6 +228,10 @@ qui {
 		save "`reporoot'\repo_vc_`repository'.dta", replace
 		exit
 	}
+	
+	/*====================================================================
+	1.2  Use repository
+	====================================================================*/
 	
 	use "`reporoot'\repo_vc_`repository'.dta", clear
 	
@@ -342,7 +354,7 @@ qui {
 		keep if inlist(upper(filename) `filenamelist')
 	}
 	
-	
+	* pause before sending to mata
 	
 	*--------------------1.3: send info to MATA
 	mata: R = st_sdata(.,tokens(st_local("varlist")))
@@ -377,12 +389,12 @@ qui {
 			
 			*--------------------2.2: Load data
 			mata: _ind_ids(R)
-			noi disp in w _n "{dup 20:-} New survey"
+			`noi' disp in w _n "{dup 20:-} New survey"
 			foreach var of local vars {
-				noi disp in g `"`var' {col 15}= "' in y `" ``var''"' 
+				`noi' disp in g `"`var' {col 15}= "' in y `" ``var''"' 
 			}
 			
-			if ( "`calcset'" == "key" & !inlist("`module'", "ALL", "GPWG2")) continue
+			if ( "`calcset'" == "key" & !inlist("`module'", "ALL", "UDB-C")) continue
 			
 			noi disp in y _n `"datalibweb, country(`countrycode') year(`year') type(`type') fileserver filename(`filename') cpivintage(`cpivintage') nometa clear"'
 			cap datalibweb, country(`countrycode') year(`year') type(`type')  ///
@@ -394,7 +406,6 @@ qui {
 				continue
 			}
 			copy `empty' `wildcard', replace 
-			
 			*--------------------2.3: check usability of survey
 			
 			**** Welfare
@@ -588,7 +599,10 @@ qui {
 			set trace off
 			
 			**----------------- Key Indicators ------------------
-			if (regexm("`calcset'", "key|all") & inlist("`module'", "ALL", "GPWG2")) {
+			
+			* pause iteration `i' 
+			
+			if (regexm("`calcset'", "key|all") & inlist("`module'", "ALL", "UDB-C")) {
 				if regexm("`trace'", "key|all") set trace on
 				
 				cap datasignature confirm  using `dtasign'
