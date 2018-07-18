@@ -18,7 +18,6 @@ version 14.0
 
 syntax anything(name=calcset id="set of calculations"),  ///
 [                                   ///
-update                              ///
 COUNtries(string)                   ///
 Years(numlist)                      ///
 REGions(string)                     ///
@@ -33,20 +32,16 @@ vermast(string)                     ///
 trace(string)                       ///
 WBOdata(string)                     ///
 vcdate(string)                      ///
-replace                             ///
 createrepo                          ///
-save                                ///
-noSHOW                              ///
-clear                               ///
 WELFAREvars(string)                 ///
 newonly                             ///
-noi  gpwg2                          ///
+noi  gpwg2  pause                   ///
 load  shape(string)                 ///
 ]
 
+if ("`pause'" == "pause") pause on
+else pause off
 
-drop _all
-pause on
 * Directory Paths
 
 local out         "\\wbgfscifs01\GTSD\02.core_team\02.data\01.Indicators"
@@ -58,19 +53,6 @@ qui {
 	/*====================================================================
 	Conditions
 	====================================================================*/
-	
-	local sscados "groupfunction wbopendata quantiles tabstatmat"
-	foreach ado of local sscados {
-		cap which `ado'
-		if (_rc) ssc install `ado'
-		local adoupdate "`adoupdate' `ado'"
-	}
-	
-	if ("`adoupdate'" != "") 	{
-		adoupdate `adoupdate', ssconly 		
-		if ("`r(pkglist)'" != "") adoupdate `r(pkglist)', update
-	}
-	
 	*------------------ Initial Parameters  ------------------
 	local date      = c(current_date)
 	local time      = c(current_time)
@@ -93,19 +75,47 @@ qui {
 	*/                                       NY.GNP.PCAP.KD; SI.POV.NAHC;          /* 
 	*/                                       SP.RUR.TOTL; SP.RUR.TOTL.ZS;          /*
 	*/                                       SP.POP.TOTL; SI.POV.GINI 
-	
-	
-	local calcset = lower("`calcset'")
-	
 	if ("`welfarevars'" == "") {
 		local welfarevars welfare welfshprosperity welfareused welfarenom /* 
 		*/   welfaredef welfareother pcexp pcinc
 	}
 	
 	
+	* Conditions for loading the data. 
+	if ("`load'" == "" & "`calcset'" != "report") {
+		if ("`calcset'" == "repo" & "`createrepo'" == "") {
+			noi disp in r "you must specify either {it:load} or {it:createrepo}"
+			error
+		}
+		else {
+			if ( ("`countries'" == "" & "`regions'" == "") | /* 
+			*/   ("`countries'" != "" & "`regions'" != "" )) {
+				noi disp in r "You must select either countries() or regions()"
+				error
+			}
+		}
+		
+	}
+	
+	local calcset = lower("`calcset'")
+	
+	*------------------ SSC commands  ------------------
+	local sscados "groupfunction wbopendata quantiles tabstatmat"
+	foreach ado of local sscados {
+		cap which `ado'
+		if (_rc) ssc install `ado'
+		local adoupdate "`adoupdate' `ado'"
+	}
+	
+	if ("`adoupdate'" != "") 	{
+		adoupdate `adoupdate', ssconly 		
+		if ("`r(pkglist)'" != "") adoupdate `r(pkglist)', update
+	}
+	
 	/*====================================================================
 	Load files
 	====================================================================*/
+	drop _all
 	
 	if ("`load'" == "load") {
 		if wordcount("`calcset'") != 1 {
@@ -119,7 +129,7 @@ qui {
 		}
 		if ("`shape'" == "") local shape "wide"
 		if !inlist("`shape'", "wide", "long") {
-			noi disp in r "shape can me wide or long only"
+		noi disp in r "shape can me wide or long only"
 		}
 		use "`out'/indicators_`calcset'_`shape'.dta", clear
 		noi disp "indicators_`calcset'_`shape'.dta loaded"
@@ -132,7 +142,7 @@ qui {
 	====================================================================*/
 	
 	if (regexm("`calcset'", "report")) {
-		indicators_report, file("`out'\indicators_reportfile.dta")
+		noi indicators_report, file("`out'\indicators_reportfile.dta")
 		exit
 	}
 	
@@ -295,7 +305,7 @@ qui {
 	
 	
 	* remove unnecessary information
-	keep if inlist(module, "ALL", "GPWG", "UDB-C")  // Ask Minh 
+	keep if inlist(module, "ALL", "GPWG", "UDB-C")  
 	
 	tostring _all, replace
 	order country years surveyid survname col module filename ///
@@ -354,7 +364,7 @@ qui {
 		keep if inlist(upper(filename) `filenamelist')
 	}
 	
-	* pause before sending to mata
+	pause before sending to mata
 	
 	*--------------------1.3: send info to MATA
 	mata: R = st_sdata(.,tokens(st_local("varlist")))
@@ -679,7 +689,7 @@ qui {
 						local dropvars "region countrycode year filename welfarevar values*"
 					}
 					
-					* sort and drop suplicates
+					* sort and drop duplicates
 					sort `dropvars' date time
 					duplicates drop `dropvars', force
 				}
