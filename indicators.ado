@@ -496,8 +496,16 @@ qui {
 			
 			
 			*percentiles
-			foreach wvar of local wlfvars {
-				quantiles `wvar'_ppp [aw = `weight'], n(10) gen(q`wvar') keeptog(hhid)
+			if ("`module'" != "GROUP") {
+				foreach wvar of local wlfvars {
+					quantiles `wvar'_ppp [aw = `weight'], n(10) gen(q`wvar') keeptog(hhid)
+				}
+			}
+			else {
+				cap noi {
+					sum bins, meanonly
+					gen qwelfare = round(1+ (bins-r(min))*(10-1)/(r(max)-r(min)))
+				}
 			}
 			
 			tempfile generalf dtasign
