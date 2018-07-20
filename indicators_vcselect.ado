@@ -35,14 +35,19 @@ if (_rc == 0) {
 	
 	* display dates 
 	local vcnumbers: list sort vcnumbers
+	return local vcnumbers = "`vcnumbers'"
 	noi disp in y "list of available vintage control dates"
+	local alldates ""
 	local i = 0
 	foreach vc of local vcnumbers {
 		local ++i
 		if (length("`i'") < 2 ) local i = "0`i'"
 		local dispdate: disp %tdDDmonCCYY `vc'
-		noi disp `"   `i' {c |} {stata vc_`dispdate':`=trim("`dispdate'")'}"'
+		local dispdate = trim("`dispdate'")
+		noi disp `"   `i' {c |} {stata vc_`dispdate':`dispdate'}"'
+		local alldates "`alldates' `dispdate'"
 	}
+	return local alldates = trim("`alldates'")
 	
 	if (wordcount("`vcnumbers'") >1) {
 		local vcnumbers: subinstr local vcnumbers " " ", ", all
@@ -58,10 +63,11 @@ else local maxvc ""
 if ("`vcdate'" == "" & "`maxdate'" == "") {
 	disp _n "select vintage control date from the list above" _request(_vcdate)
 }
-else local vcdate = "`maxvc'"
+if ("`maxdate'" != "") local vcdate = "`maxvc'"
 
-return local vcdate   = "`vcdate'"
+return local vcdate   = "vc_`vcdate'"
 return local maxdate  = "`maxvc'"
+return local formdate = "%tdDDmonCCYY"
 
 end
 
