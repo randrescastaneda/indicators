@@ -87,6 +87,7 @@ pcexp pcinc"{p_end}
 {synopt:{opt mod:ule(string)}} Perform calculations for a specific module of GMD{p_end}
 {synopt:{opt plines(string)}} Poverty lines for poverty. Default is "1.9 3.2 5.5"{p_end}
 {synopt:{opt cpivintage(string)}} Vintage of CPI. default is "v02"{p_end}
+{synopt:{opt type:s(string)}} Type of collection.{p_end}
 {synopt:{opt veralt(string)}} Alternative version of data to be used in calculations{p_end}
 {synopt:{opt vermast(string)}} Master version of the data to be used in calculations.{p_end}
 {synopt:{opt filen:ames(string)}} Perform calculation for a specific file{p_end}
@@ -177,6 +178,7 @@ to each set of calculations.
 		{cmd:ine }{col 35}Inequality indicators
 		{cmd:shp }{col 35}Shared Prosperity
 		{cmd:key }{col 35}Key Indicators
+		{cmd:wdi }{col 35}WDI indicators
 		{cmd:all }{col 35}All the above
 		{hline 45}
 		{cmd:    }{col 35}

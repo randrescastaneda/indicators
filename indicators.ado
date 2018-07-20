@@ -13,7 +13,7 @@ Output:             dta, xlsx, csv
 /*====================================================================
 0: Program set up
 ====================================================================*/
-program define indicators
+program define indicators, rclass
 version 14.0
 
 syntax anything(name=calcset id="set of calculations"),  ///
@@ -29,6 +29,7 @@ plines(string)                      ///
 cpivintage(string)                  ///
 veralt(string)                      ///
 vermast(string)                     ///
+TYPEs(string)                       ///
 trace(string)                       ///
 WBOdata(string)                     ///
 vcdate(string)                      ///
@@ -133,6 +134,7 @@ qui {
 		}
 		use "`out'/indicators_`calcset'_`shape'.dta", clear
 		noi disp "indicators_`calcset'_`shape'.dta loaded"
+		return local filename = "indicators_`calcset'_`shape'.dta"
 		exit
 	}
 	
@@ -243,7 +245,8 @@ qui {
 	1.2  Use repository
 	====================================================================*/
 	
-	use "`reporoot'\repo_vc_`repository'.dta", clear
+	* use "`reporoot'\repo_vc_`repository'.dta", clear
+	indicators repo, load
 	
 	* ----Keep most recent repo or whatever the user selects -----------------------
 	
@@ -305,10 +308,12 @@ qui {
 	
 	
 	* remove unnecessary information
-	keep if inlist(module, "ALL", "GPWG", "UDB-C")  
+	* keep if inlist(module, "ALL", "GPWG", "UDB-C")  
+	keep if regexm(module, "ALL|GPWG|GROUP|UDB\-C")
 	
 	tostring _all, replace
-	order country years surveyid survname col module filename ///
+	rename col type
+	order country years surveyid survname type module filename ///
 	latest region countryname vermast veralt
 	des, varlist
 	local varlist = "`r(varlist)'"
@@ -362,6 +367,15 @@ qui {
 			local filenamelist `"`filenamelist', "`filename'""'
 		}
 		keep if inlist(upper(filename) `filenamelist')
+	}
+	
+	if ("`types'" != "") {
+		local types = upper("`types'")
+		local typelist ""
+		foreach type of local types {
+			local typelist `"`typelist', "`type'""'
+		}
+		keep if inlist(upper(type) `typelist')
 	}
 	
 	pause before sending to mata
@@ -707,7 +721,7 @@ qui {
 				}
 				
 				* Vintage control
-				cap noi indicators_vcontrol, vars(region countrycode year survname welfarevar)
+				cap noi indicators_vcontrol, vars(region countrycode year survname type welfarevar)
 				if (_rc) {
 					disp in red "Err `calc' vcontrol"
 					post `ef' ("all") ("all") ("") ("") (`e'2)
