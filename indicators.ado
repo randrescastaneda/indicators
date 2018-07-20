@@ -35,7 +35,7 @@ WBOdata(string)                     ///
 vcdate(string)                      ///
 createrepo                          ///
 WELFAREvars(string)                 ///
-newonly                             ///
+newonly force                       ///
 noi  gpwg2  pause                   ///
 load  shape(string)                 ///
 purge restore keep(string)          ///
@@ -496,8 +496,16 @@ qui {
 			
 			
 			*percentiles
-			foreach wvar of local wlfvars {
-				quantiles `wvar'_ppp [aw = `weight'], n(10) gen(q`wvar') keeptog(hhid)
+			if ("`module'" != "GROUP") {
+				foreach wvar of local wlfvars {
+					quantiles `wvar'_ppp [aw = `weight'], n(10) gen(q`wvar') keeptog(hhid)
+				}
+			}
+			else {
+				cap noi {
+					sum bins, meanonly
+					gen qwelfare = round(1+ (bins-r(min))*(10-1)/(r(max)-r(min)))
+				}
 			}
 			
 			tempfile generalf dtasign
@@ -744,7 +752,7 @@ qui {
 				
 				* save file 
 				cap noi indicators_save `calc', basename(`basename') out("`out'") /*  
-				*/  datetime(`datetime')
+				*/  datetime(`datetime') `force'
 				if (_rc) {
 					disp in red "Err `calc' saving"
 					post `ef' ("all") ("all") ("") ("") (`e'3)
@@ -804,7 +812,8 @@ qui {
 		
 		order region* country* year date time datetime vc_*
 		*------------------3.2: Reshape -> long and Save
-		cap noi indicators_save wdi, basename(`basename') out("`out'") datetime(`datetime')
+		cap noi indicators_save wdi, basename(`basename') out("`out'") /* 
+		 */ datetime(`datetime') `force'
 		if (_rc) {
 			disp in red "Err ShP saving"
 			post `ef' ("all") ("all") ("") ("") (53)

@@ -57,16 +57,14 @@ qui {
 			
 			order region countrycode year filename welfarevar case values
 		}
-		
-		if inlist("`calcset'", "key") {
+		else if inlist("`calcset'", "key") {
 			reshape long values, i(filename  datetime vc_* welfarevar precase) /* 
 			*/     j(case) string
 			
 			replace case = precase+case
 			drop precase
 			order region countrycode year filename welfarevar case values
-		}
-		
+		}	
 		else if ("`calcset'" == "pov") { // Poverty case
 			
 			reshape long fgt0_ fgt1_ fgt2_, i(filename datetime vc_* welfarevar ) j(line)
@@ -75,8 +73,7 @@ qui {
 			reshape long fgt, i(filename datetime vc_* welfarevar line) j(FGT)
 			rename (FGT fgt) (fgt values)
 			order region countrycode year filename welfarevar line fgt values
-		}
-		
+		}		
 		else if ("`calcset'" == "wdi") { // WDI indicators
 			des, varlist
 			local wdivars = "`r(varlist)'"
@@ -85,8 +82,6 @@ qui {
 				if regexm("`var'", "_") local indvars "`indvars' `var'"
 			}
 			rename (`indvars') values=
-			
-			
 			
 			cap des vc_*, varlist
 			if (_rc ==0) local vcvars = "`r(varlist)'"
