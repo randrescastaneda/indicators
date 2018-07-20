@@ -38,7 +38,8 @@ WELFAREvars(string)                 ///
 newonly                             ///
 noi  gpwg2  pause                   ///
 load  shape(string)                 ///
-]
+purge restore keep(string)          ///
+] 
 
 if ("`pause'" == "pause") pause on
 else pause off
@@ -83,20 +84,21 @@ qui {
 	
 	
 	* Conditions for loading the data. 
-	if ("`load'" == "" & "`calcset'" != "report") {
-		if ("`calcset'" == "repo" & "`createrepo'" == "") {
-			noi disp in r "you must specify either {it:load} or {it:createrepo}"
-			error
-		}
-		else {
-			if ( ("`countries'" == "" & "`regions'" == "") | /* 
-			*/   ("`countries'" != "" & "`regions'" != "" )) {
-				noi disp in r "You must select either countries() or regions()"
+	if ("`purge'" == "" & "`restore'" == "") {
+		if ("`load'" == "" & "`calcset'" != "report") {
+			if ("`calcset'" == "repo" & "`createrepo'" == "") {
+				noi disp in r "you must specify either {it:load} or {it:createrepo}"
 				error
 			}
-		}
-		
-	}
+			else {
+				if ( ("`countries'" == "" & "`regions'" == "") | /* 
+				*/   ("`countries'" != "" & "`regions'" != "" )) {
+					noi disp in r "You must select either countries() or regions()"
+					error
+				}
+			} // end of countries or regions not selected
+		} // end of report and load == ""
+	}  // end of purge or restore condition
 	
 	local calcset = lower("`calcset'")
 	
@@ -130,7 +132,7 @@ qui {
 		}
 		if ("`shape'" == "") local shape "wide"
 		if !inlist("`shape'", "wide", "long") {
-		noi disp in r "shape can me wide or long only"
+			noi disp in r "shape can me wide or long only"
 		}
 		use "`out'/indicators_`calcset'_`shape'.dta", clear
 		noi disp "indicators_`calcset'_`shape'.dta loaded"
@@ -138,6 +140,18 @@ qui {
 		exit
 	}
 	
+	/*====================================================================
+	PURGE OR RESTORE
+	====================================================================*/
+	if ("`purge'" != "" | "`restore'" != "") {
+		if (wordcount("`calcset'") != 1) {
+			noi disp in r "set of calculations must be one when using {it:purge} or {it:restore}"
+			error
+		}
+		noi indicators_purge `calcset', vcdate(`vcdate') keep(`keep') `purge' /* 
+		*/  `restore' out("`out'") datetime(`datetime')
+		exit
+	}
 	
 	/*====================================================================
 	REPORT

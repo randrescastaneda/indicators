@@ -82,6 +82,14 @@ repository file. {err: will be added to loading options}{p_end}
 {synopt:{opt welfare:vars(string)}} set of welfare variables to use for calculations. 
 Default is "welfare welfshprosperity welfareused welfarenom welfaredef welfareother 
 pcexp pcinc"{p_end}
+
+{syntab:Purge and Restore}
+{synopt:{opt purge}} Purge output files from a particular vc_ date. requires 
+{it:keep(before|after)}{p_end}
+{synopt:{opt keep(string)}} specifies whether the purge has to be done before or 
+after the selected date. No default. {p_end}
+{synopt:{opt restore}} Restore output files form any previous vintage.{p_end}
+
 {syntab:Seldom used}
 {synopt:{opt reg:ions(string)}} Perform calculations by countries of the same region.{p_end}
 {synopt:{opt mod:ule(string)}} Perform calculations for a specific module of GMD{p_end}

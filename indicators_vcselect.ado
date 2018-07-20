@@ -65,6 +65,7 @@ if ("`vcdate'" == "" & "`maxdate'" == "") {
 }
 if ("`maxdate'" != "") local vcdate = "`maxvc'"
 
+local vcdate:subinstr local vcdate "vc_" "", all
 return local vcdate   = "vc_`vcdate'"
 return local maxdate  = "`maxvc'"
 return local formdate = "%tdDDmonCCYY"
