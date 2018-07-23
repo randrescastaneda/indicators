@@ -331,7 +331,10 @@ how it could be done, but keep in mind that
 {title:Options}
 {dlgtab:Main}
 {phang}
-{opt coun:tries(string)}  
+{opt coun:tries(string)} Set of three-digit country codes using WDI standard. Note 
+that, in contrast to {help datalibweb##param:datalibweb}'s option {it:country}, 
+{cmd:indicators}' option {it:countries } accepts more than one country digit and 
+shorthand like "all" to refer to a larger set of countries. 
 
 {phang}
 {opt y:ears(numlist)}  
@@ -403,10 +406,83 @@ how it could be done, but keep in mind that
 {phang}
 {opt wbo:data(string)}  
 
+{phang}{dup 80:-}
+
+
 {marker examples}{...}
 {title:Examples}
+{dlgtab:Basic use}
 
-{phang} <insert example command>
+{phang}[1]Calculate poverty indicators for all countries and all databases. 
+
+{p 10 10 2}. indicators pov, countries(all){p_end}
+
+{phang}[2]Calculate inequality indicators for new data only with respect to previous
+version of {help datalibweb} repository. Note that option {it:countries()} is required. 
+
+{p 10 10 2}. indicators ine, countries(all) newonly{p_end}
+
+{phang}[3]Calculate Shared prosperity for one country, one year, and one collection. 
+For this example, it would be Mexico, 2016, PovCalNet collection.
+
+{p 10 10 2}. indicators shp, countries(MEX) year(2016) type(PCN){p_end}
+
+{phang}[4]Calculate all indicators for all databases. {err: this function may take 
+more than 10 hours to run, for it will perform calculations for almost 3000 files.}
+
+{p 10 10 2}. indicators all, countries(all){p_end}
+
+{dlgtab:Repository}
+
+{phang}[1]Create general repository. Note that option {it:createrepo} is required. If not 
+specified, then error. 
+
+{p 10 10 2}. indicators repo, createrepo{p_end}
+
+{phang}[2]Create GPWG2 repository and add to general repository. 
+
+{p 10 10 2}. indicators repo, createrepo gpwg2{p_end}
+
+{dlgtab:Load data and report file}
+
+{phang}[1]Load indicators file with poverty estimates (Wide format).
+
+{p 10 10 2}. indicators pov, load{p_end}
+
+{phang}[2]Load indicators file with inequality estimates in long format. 
+
+{p 10 10 2}. indicators ine, load shape(long){p_end}
+
+{phang}[3]Load repository file (No long format available)
+
+{p 10 10 2}. indicators repo, load {p_end}
+
+{phang}[4]Load Report file of error and success of the process. Note that option 
+{it:load} is not required
+
+{p 10 10 2}. indicators report{p_end}
+
+{dlgtab:Purge and Restore}
+
+{phang}[1]Purge indicators_ine* files BEFORE 30jun2018. This option is used when all
+data is making the files unnecessarily big. Note that 30jun2018 is not part of
+the vintages available. This is intentionally done to avoid involuntary deletions. 
+
+{p 10 10 2}. indicators ine, purge keep(after) vcdate(30jun2018){p_end}
+
+
+{phang}[2]Purge indictors_ine by selecting the date with clicks. Note that option 
+{it:keep()} is required when using {it:purge}. {err: Executing the code below and }
+{err:selecting any of the available dates in the screen will delete import information. }
+{err:Make sure you understand function {it:restore} before continuing.}
+
+{p 10 10 2}. indicators ine, purge keep(after){p_end}
+
+{phang}[3]Restore indicators_ine to a particular version. This is possible only by 
+cliking in the Stata results window. 
+
+{p 10 10 2}. indicators ine, restore{p_end}
+
 
 {marker files}{...}
 {title:Explanation of files}
