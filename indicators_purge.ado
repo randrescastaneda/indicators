@@ -63,6 +63,7 @@ if ("`purge'" != "") {
 	local vcvar     = "`r(vcdate)'" 
 	local alldates  = "`r(alldates)'"
 	local datecount = wordcount("`alldates'")
+	confirm var `vcvar'
 	
 	
 	cap window stopbox rusure /* 
@@ -129,6 +130,8 @@ if ("`restore'" != "") {
 	}
 	noi disp _n "select vintage control date from the list above" _request(_vcnumber)
 	local vcdate: disp %tcDDmonCCYY_HH:MM:SS `vcnumber' 
+	
+	confirm file "`out'/_vintage/indicators_`calcset'_`vcnumber'.dta"
 	
 	cap window stopbox rusure /* 
 	*/  "You are about to replace current indicators_`calcset' files with "  /* 

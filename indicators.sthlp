@@ -483,7 +483,6 @@ cliking in the Stata results window.
 
 {p 10 10 2}. indicators ine, restore{p_end}
 
-
 {marker files}{...}
 {title:Explanation of files}
 
