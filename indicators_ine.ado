@@ -12,8 +12,7 @@ syntax , weight(string) wlfvars(string) wildcard(string)
 * tempfile inefile
 tempname inef
 
-postfile `inef' str20 welfarevar double valuesgini valuestheil /* 
- */  using "`wildcard'", replace
+postfile `inef' str20 welfarevar double valuesgini valuestheil using "`wildcard'", replace
 
 foreach wvar of local wlfvars { 
 
@@ -22,7 +21,6 @@ foreach wvar of local wlfvars {
 
 	mata: st_local("_gini",strofreal(_ind_ine_gini(y,w)))
 	mata: st_local("_theil",strofreal(_ind_ine_theil(y,w)))
-	
 	post `inef' ("`wvar'") (`_gini') (`_theil')
 
 }

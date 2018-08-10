@@ -520,15 +520,21 @@ qui {
 				if (_rc) use `generalf', clear
 				
 				copy `empty' `wildcard', replace 
-				cap indicators_ine, weight(`weight') wlfvars("`wlfvars'") /* 
-				*/ wildcard("`wildcard'")
-				if (_rc) {
-					disp in red "Err calculating inequality"
-					post `ef' ("`region'") ("`countrycode'") ("`year'") ///
-					("`filename'") (21)
+				//set trace on 
+				//set traced 0
+				local _mywlfvar
+				foreach pp of local wlfvars{
+					putmata pp = `pp', replace
+					mata: st_local("_nogood",strofreal(allof(pp,.)))
+					if (`_nogood'==0) local _mywlfvar `_mywlfvar' `pp'  
+				}
+				dis as error "cap indicators_ine, weight(`weight') wlfvars(`_mywlfvar') wildcard(`wildcard')"
+				cap indicators_ine, weight(`weight') wlfvars(`_mywlfvar') wildcard(`wildcard')
+				if (_rc!=0){
+					disp as error "Err calculating inequality"
+					post `ef' ("`region'") ("`countrycode'") ("`year'") ("`filename'") (21)
 					continue
 				}
-				
 				use `wildcard', clear
 				foreach var of local vars {
 					gen `var' = "``var''"
@@ -546,9 +552,10 @@ qui {
 				disp in y _n "`filename' ine OK"
 				post `ef' ("`region'") ("`countrycode'") ("`year'") ///
 				("`filename'") (20)
+
 				
 			}
-			set trace off
+			//set trace off
 			
 			**----------------- FGT family ------------------
 			if (regexm("`calcset'", "pov|all")) {
@@ -586,7 +593,7 @@ qui {
 				post `ef' ("`region'") ("`countrycode'") ("`year'") ///
 				("`filename'") (30)
 			}
-			set trace off
+			*set trace off
 			
 			**----------------- Shared Prosperity ------------------
 			if (regexm("`calcset'", "shp|all")) {
@@ -643,7 +650,7 @@ qui {
 					("`filename'") (40)
 				}
 			} // end of SHP
-			set trace off
+			*set trace off
 			
 			**----------------- Key Indicators ------------------
 			
@@ -689,7 +696,7 @@ qui {
 					("`filename'") (60)
 				}
 			} // end of key
-			set trace off
+			*set trace off
 			
 		} // end of surveys loop
 		
@@ -761,7 +768,7 @@ qui {
 			} // end of set of calculation loop 
 			
 		} // end pov file update section
-		set trace off
+		*set trace off
 	}
 	
 	/*====================================================================
@@ -820,7 +827,7 @@ qui {
 			local errwdi = 1
 		}
 		
-		if regexm("`trace'", "wdi") set trace off
+		if regexm("`trace'", "wdi") *set trace off
 		*--------------------3.3: Errors
 		if (`errwdi' == 0) {
 			noi disp in y _n "`filename' WDI OK"
@@ -828,7 +835,7 @@ qui {
 			("wbopendata") (50)
 		}
 	} // end of data from WDI
-	set trace off
+	*set trace off
 	
 	*><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 	*><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
@@ -905,7 +912,6 @@ qui {
 		noi disp in w "{hline}"
 		
 		save "`masterr'", replace
-		
 		noi indicators_report , file("`masterr'")
 	}
 	
@@ -944,8 +950,8 @@ end
 /*====================================================================
 Mata functions
 ====================================================================*/
-mata:
-mata drop _ind*()
+mata
+//mata drop _ind*()
 mata set mataoptimize on
 mata set matafavor speed
 

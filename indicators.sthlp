@@ -427,8 +427,8 @@ For this example, it would be Mexico, 2016, PovCalNet collection.
 
 {p 10 10 2}. indicators shp, countries(MEX) year(2016) type(PCN){p_end}
 
-{phang}[4]Calculate all indicators for all databases. {err: this function may take 
-more than 10 hours to run, for it will perform calculations for almost 3000 files.}
+{phang}[4]Calculate all indicators for all databases. {err: This function may take }
+{err:more than 10 hours to run, for it will perform calculations for almost 3000 files.}
 
 {p 10 10 2}. indicators all, countries(all){p_end}
 
