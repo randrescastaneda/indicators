@@ -13,11 +13,13 @@ tempname Mkey // name of big matrix
 
 qui {
 	
+	/* 
 	cap drop hhsize
 	ren hsize hhsize
 	sort  hhid
 	duplicates drop hhid , force		//MAKING it household level data
 	gen double popw `exp'*hhsize
+	*/
 	
 	//Define rural
 	cap gen rur=(urban==0) if urban!=.
@@ -67,7 +69,7 @@ qui {
 			
 			tempname Mt
 			
-			tabstat `meanes' [aw = popw], by(`byvar') save  nototal
+			tabstat `meanes' [aw `exp'], by(`byvar') save  nototal
 			tabstatmat `Mt',  nototal
 			mata: Km = st_matrix(st_local("Mt")) ; /* 
 			*/        st_matrix(st_local("Mt"), (Km, (1::rows(Km))))
