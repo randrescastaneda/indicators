@@ -10,10 +10,15 @@ Creation Date:     1 Jun 2018 - 15:32:22
 ==================================================*/
 program define indicators_vcontrol, rclass
 
-syntax [anything(name=calcset id="set of calculations")], [ vars(varlist) ]
+syntax [anything(name=calcset id="set of calculations")], [ ///
+vars(varlist) ///
+pause ///
+]
+
 qui {
+	if ("`pause'" == "pause") pause on
+	else pause off
 	
-	pause on 
 	/*==================================================
 	1: Vintage Control Variables
 	==================================================*/

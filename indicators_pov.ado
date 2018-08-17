@@ -7,10 +7,16 @@
 ====================================================================*/
 
 program define indicators_pov
-syntax [aweight fweight pweight], plines(string) wlfvars(string)  wildcard(string)
+syntax [aweight fweight pweight], ///
+plines(string)   ///
+wlfvars(string)  ///
+wildcard(string) ///
+[ pause ]
+
+if ("`pause'" == "pause") pause on
+else pause off
 
 tempname Mt Mfgt
-pause on 
 
 local  w = 0
 foreach wvar of local wlfvars {

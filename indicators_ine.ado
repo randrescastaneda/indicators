@@ -7,7 +7,15 @@
 ====================================================================*/
 
 program define indicators_ine, rclass
-syntax , weight(string) wlfvars(string) wildcard(string)
+syntax , ///
+weight(string)      ///
+wlfvars(string)     ///
+wildcard(string)  [ ///
+pause               ///
+]
+
+if ("`pause'" == "pause") pause on
+else pause off
 
 * tempfile inefile
 tempname inef

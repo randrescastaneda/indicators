@@ -526,7 +526,7 @@ qui {
 				
 				copy `empty' `wildcard', replace 
 				cap indicators_ine, weight(`weight') wlfvars("`wlfvars'") /* 
-        */ wildcard("`wildcard'") 
+        */ wildcard("`wildcard'")  `pause'
  
 				if (_rc!=0){
 					disp as error "Err calculating inequality"
@@ -565,7 +565,7 @@ qui {
 				
 				copy `empty' `wildcard', replace 
 				cap `noi' indicators_pov [aw = `weight'], plines("`plines'") /* 
-				*/  wlfvars(`wlfvars') wildcard("`wildcard'")
+				*/  wlfvars(`wlfvars') wildcard("`wildcard'") `pause'
 				
 				if (_rc) {
 					disp in red "Err calculating poverty"
@@ -756,7 +756,8 @@ qui {
 				* Vintage control
 				pause `calc' - Before creating vc_ variable
 				
-				cap noi indicators_vcontrol, vars(region countrycode year survname type welfarevar)
+				cap noi indicators_vcontrol, `pause' /* 
+				 */  vars(region countrycode year survname type welfarevar)
 				if (_rc) {
 					disp in red "Err `calc' vcontrol"
 					post `ef' ("all") ("all") ("") ("") (`e'2)
