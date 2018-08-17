@@ -256,7 +256,7 @@ qui {
 	====================================================================*/
 	
 	* use "`reporoot'\repo_vc_`repository'.dta", clear
-	indicators repo, load
+	indicators repo, load `pause'
 	
 	* ----Keep most recent repo or whatever the user selects -----------------------
 	
@@ -526,7 +526,7 @@ qui {
 				
 				copy `empty' `wildcard', replace 
 				cap indicators_ine, weight(`weight') wlfvars("`wlfvars'") /* 
-        */ wildcard("`wildcard'")
+        */ wildcard("`wildcard'") 
  
 				if (_rc!=0){
 					disp as error "Err calculating inequality"
@@ -663,7 +663,7 @@ qui {
 				
 				copy `empty' `wildcard', replace 
 				cap noi indicators_key [aw = `weight'], wlfvars(`wlfvars') /* 
-				*/  plines("`plines'") wildcard("`wildcard'")
+				*/  plines("`plines'") wildcard("`wildcard'") `pause'
 				
 				if (_rc) {
 					disp in red "Err key indicators"
@@ -678,6 +678,7 @@ qui {
 						gen `var' = "``var''"
 					}
 					
+					pause key - after creating key indic file wildcard
 					* Welfare type 
 					gen welftype = "`welftype'"
 					replace welftype = "INC" if welfarevar == "pcinc"  
@@ -712,6 +713,7 @@ qui {
 				if !regexm("`calc'", "`allind_'") continue   // make sure 'report' or other don't go
 				use `wrk`calc'', clear                      
 				
+				pause `calc' - after open saved file 
 				
 				local basename "indicators_`calc'"
 				local file_wide "`out'/`basename'_wide.dta"
@@ -733,8 +735,10 @@ qui {
 					}
 					
 					* sort and drop duplicates
-					sort `dropvars' date time
+					gsort `dropvars' -datetime
+					pause `calc' - before droping vars
 					duplicates drop `dropvars', force
+					pause `calc' - After droping vars
 				}
 				
 				* Fix names of surveyid and files
@@ -750,11 +754,14 @@ qui {
 				}
 				
 				* Vintage control
+				pause `calc' - Before creating vc_ variable
+				
 				cap noi indicators_vcontrol, vars(region countrycode year survname type welfarevar)
 				if (_rc) {
 					disp in red "Err `calc' vcontrol"
 					post `ef' ("all") ("all") ("") ("") (`e'2)
 				}
+				pause `calc' - After creating vc_ variable
 				
 				* save file 
 				cap noi indicators_save `calc', basename(`basename') out("`out'") /*  

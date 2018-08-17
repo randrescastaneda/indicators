@@ -7,7 +7,11 @@
 ====================================================================*/
 
 program define indicators_key
-syntax [aweight fweight pweight], plines(string) wlfvars(string) wildcard(string)
+syntax [aweight fweight pweight], ///
+plines(string)    ///
+wlfvars(string)   ///
+wildcard(string)  ///
+[ pause ]
 
 tempname Mkey // name of big matrix
 
@@ -36,6 +40,7 @@ qui {
 	rename male gen
 	local byvars rur gen gag edu
 	
+	pause key - before loop of welfare variables. 
 	local w = 0
 	foreach wvar of local wlfvars {
 		local ++w
@@ -45,6 +50,7 @@ qui {
 			gen poor`a'`wvar' = (`wvar'_ppp < `ll') if `wvar'_ppp != .
 		}
 		
+		pause key - after creating poverty indicator with `wvar'
 		* la def poor 1"Poor" 0"Non Poor"
 		* for var poor* : la val X poor
 		
@@ -80,6 +86,7 @@ qui {
 		} // end of byvars loop
 		
 	}  // end of welfare vars loop
+	
 	
 	drop _all
 	mat colname `Mkey' = p_190np p_190p_ p_320np p_320p_ /* 
