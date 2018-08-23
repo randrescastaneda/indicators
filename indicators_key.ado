@@ -12,6 +12,10 @@ plines(string)    ///
 wlfvars(string)   ///
 wildcard(string)  ///
 [ pause ]
+if ("`pause'" == "pause") pause on
+else                      pause off
+
+
 
 tempname Mkey // name of big matrix
 
@@ -74,12 +78,24 @@ qui {
 			local ++m
 			
 			tempname Mt
-			
-			tabstat `meanes' [aw `exp'], by(`byvar') save  nototal
-			tabstatmat `Mt',  nototal
+			pause before - tabstat `meanes' [aw `exp'], by(`byvar') save  nototal
+			cap tabstat `meanes' [aw `exp'], by(`byvar') save  nototal
+			if (_rc) {
+				local nm: word count `meanes'
+				if inlist("`byvar'" , "rur", "gen") local nb = 2
+				if inlist("`byvar'" , "gag")        local nb = 3
+				if inlist("`byvar'" , "edu")        local nb = 4
+				
+				matrix `Mt' = J(`nb', `nm', .)
+				
+			}
+			else {
+				
+				tabstatmat `Mt',  nototal
+				
+			}
 			mata: Km = st_matrix(st_local("Mt")) ; /* 
 			*/        st_matrix(st_local("Mt"), (Km, (1::rows(Km))))
-			
 			mat `Mkey' = nullmat(`Mkey') \ `Mt', J(rowsof(`Mt'), 1, `m') /* 
 			*/          , J(rowsof(`Mt'), 1, `w')  
 			
@@ -132,9 +148,10 @@ void _ind_ids(string matrix R) {
 	vars = tokens(st_local("vars"))
 	for (j =1; j<=cols(vars); j++) {
 		//printf("j=%s\n", R[i,j])
-	st_local(vars[j], R[i,j] )
-} 
-} // end of IDs variables
-
-end
-
+		st_local(vars[j], R[i,j] )
+	} 
+	} // end of IDs variables
+	
+	end
+	
+		
