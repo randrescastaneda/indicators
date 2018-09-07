@@ -47,7 +47,7 @@ qui {
 		desc vc_*, varlist
 		local vclist = "`r(varlist)'"
 		local vclist: list vclist - vcvar
-		drop `vclist'
+		if ("`vclist'" != "") drop `vclist'
 		
 		
 		*----- indicator-specific modifications -----------
@@ -87,7 +87,7 @@ qui {
 			if (_rc ==0) local vcvars = "`r(varlist)'"
 			else         local vcvars = ""
 			
-			reshape long values, i(regioncode countrycode year date time vc_*) j(case) string
+			reshape long values, i(regioncode countrycode year date time `vcvars') j(case) string
 		}
 		else {
 			disp as err "calculation invalid"

@@ -829,12 +829,12 @@ qui {
 		cap noi indicators_save wdi, basename(`basename') out("`out'") /* 
 		 */ datetime(`datetime') `force'
 		if (_rc) {
-			disp in red "Err ShP saving"
+			disp in red "Err WDI saving"
 			post `ef' ("all") ("all") ("") ("") (53)
 			local errwdi = 1
 		}
 		
-		if regexm("`trace'", "wdi") *set trace off
+		if regexm("`trace'", "wdi") set trace off
 		*--------------------3.3: Errors
 		if (`errwdi' == 0) {
 			noi disp in y _n "`filename' WDI OK"
