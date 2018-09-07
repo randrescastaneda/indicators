@@ -810,7 +810,7 @@ qui {
 		local basename "indicators_wdi"
 		local wdifile_wide "`out'/`basename'_wide.dta"
 		cap confirm new file "`wdifile_wide'"
-		if (_rc) append using "`wdifile_wide'"
+		//if (_rc) append using "`wdifile_wide'"
 		
 		
 		cap noi indicators_vcontrol wdi
