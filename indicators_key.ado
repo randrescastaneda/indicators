@@ -31,6 +31,7 @@ qui {
 	
 	//Define rural
 	cap gen rur=(urban==0) if urban!=.
+	replace rur = rur + 1  // to match convention of PEB SM2018
 	
 	//Age groups
 	recode  age (0/14 = 1 gag1) (15/64 = 2 gag2) (65/max = 3 gag3) , gen(gag)
@@ -42,6 +43,7 @@ qui {
 	* lab def males 0 "ggender" 1 "ggender1"
 	* lab val male males
 	rename male gen
+	replace gen  = gen + 1  // to match convention of PEB SM2018
 	local byvars rur gen gag edu
 	
 	pause key - before loop of welfare variables. 
@@ -74,31 +76,38 @@ qui {
 		poor550_np`wvar' poor550_p`wvar' B40`wvar' T60`wvar' 
 		
 		local m = 0
+		local nm: word count `meanes'
 		foreach byvar of local byvars	{
 			local ++m
+			if inlist("`byvar'" , "rur", "gen") numlist "1/2"
+			if inlist("`byvar'" , "gag")        numlist "1/3"
+			if inlist("`byvar'" , "edu")        numlist "1/4"
 			
+			local levels = "`r(numlist)'"
+			pause before - tabstat `meanes' [aw `exp'] if `byvar' == `level' , save
+			
+			foreach level of local levels {
 			tempname Mt
-			pause before - tabstat `meanes' [aw `exp'], by(`byvar') save  nototal
-			cap tabstat `meanes' [aw `exp'], by(`byvar') save  nototal
-			if (_rc) {
-				local nm: word count `meanes'
-				if inlist("`byvar'" , "rur", "gen") local nb = 2
-				if inlist("`byvar'" , "gag")        local nb = 3
-				if inlist("`byvar'" , "edu")        local nb = 4
-				
-				matrix `Mt' = J(`nb', `nm', .)
-				
-			}
-			else {
-				
-				tabstatmat `Mt',  nototal
-				
-			}
-			mata: Km = st_matrix(st_local("Mt")) ; /* 
-			*/        st_matrix(st_local("Mt"), (Km, (1::rows(Km))))
-			mat `Mkey' = nullmat(`Mkey') \ `Mt', J(rowsof(`Mt'), 1, `m') /* 
-			*/          , J(rowsof(`Mt'), 1, `w')  
+				/* NOTE: This process is significantly slower than the one before, but 
+				in this way we make sure countries that have incomplete values in their
+				categorical variables are included correctly.  */
 			
+				cap tabstat `meanes' [aw `exp'] if `byvar' == `level' , save
+				if (_rc) {
+					
+					matrix `Mt' = J(1, `nm', .)
+				}
+				else {
+					
+					tabstatmat `Mt',  nototal	
+					
+				}
+				
+				matrix `Mt' = `Mt', `level'
+				mat `Mkey' = nullmat(`Mkey') \ `Mt', J(rowsof(`Mt'), 1, `m'), /* 
+				*/           J(rowsof(`Mt'), 1, `w')  
+				
+			} // end of levels loop
 		} // end of byvars loop
 		
 	}  // end of welfare vars loop
