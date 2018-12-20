@@ -139,12 +139,12 @@ qui {
 	/*====================================================================
 	PURGE OR RESTORE
 	====================================================================*/
-	if ("`purge'" != "" | "`restore'" != "") {
+	if ("`restore'" != "") {
 		if (wordcount("`calcset'") != 1) {
 			noi disp in r "set of calculations must be one when using {it:purge} or {it:restore}"
 			error
 		}
-		noi indicators_purge `calcset', vcdate(`vcdate') keep(`keep') `purge' /* 
+		noi indicators_purge `calcset', vcdate(`vcdate') keep(`keep') /* 
 		*/  `restore' out("`out'") datetime(`datetime')
 		exit
 	}
