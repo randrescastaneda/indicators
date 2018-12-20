@@ -18,27 +18,27 @@ version 14.0
 
 syntax anything(name=calcset id="set of calculations"),  ///
 [                                   ///
-COUNtries(string)                   ///
-Years(numlist)                      ///
-REGions(string)                     ///
-FILENames(string)                   ///
-REPOsitory(string)                  ///
-reporoot(string)                    ///
-MODule(string)                      ///
-plines(string)                      ///
-cpivintage(string)                  ///
-veralt(string)                      ///
-vermast(string)                     ///
-TYPEs(string)                       ///
-trace(string)                       ///
-WBOdata(string)                     ///
-vcdate(string)                      ///
-createrepo                          ///
-WELFAREvars(string)                 ///
-newonly force                       ///
-noi  gpwg2  pause                   ///
-load  shape(string)                 ///
-purge restore keep(string)          ///
+			COUNtries(string)                   ///
+			Years(numlist)                      ///
+			REGions(string)                     ///
+			FILENames(string)                   ///
+			REPOsitory(string)                  ///
+			reporoot(string)                    ///
+			MODule(string)                      ///
+			plines(string)                      ///
+			cpivintage(string)                  ///
+			veralt(string)                      ///
+			vermast(string)                     ///
+			TYPEs(string)                       ///
+			trace(string)                       ///
+			WBOdata(string)                     ///
+			vcdate(string)                      ///
+			createrepo                          ///
+			WELFAREvars(string)                 ///
+			newonly force                       ///
+			noi  gpwg2  pause                   ///
+			load  shape(string)                 ///
+			purge restore keep(string)          ///
 ] 
 
 if ("`pause'" == "pause") pause on
@@ -387,6 +387,14 @@ qui {
 		}
 		keep if inlist(upper(type) `typelist')
 	}
+	if ("`module'" != "") {
+		local modules = upper("`module'")
+		local modulelist ""
+		foreach mod of local modules {
+			local modulelist `"`modulelist', "`mod'""'
+		}
+		keep if inlist(upper(module) `modulelist')
+	}
 	
 	pause before sending to mata
 	
@@ -722,6 +730,7 @@ qui {
 					append using "`file_wide'"
 					replace welfarevar = "welfare" if welfarevar == "" 
 					
+					pause after append with master file
 					* -----Indicator-specific conditions------
 					if ("`calc'" == "pov") {
 						local e = 3
