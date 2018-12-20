@@ -107,9 +107,7 @@ if ("`purge'" != "") {
 ==================================================*/
 
 if ("`restore'" != "") {
-	local out "\\wbgfscifs01\GTSD\02.core_team\02.data\01.Indicators"
-	local calcset "pov"
-	
+
 	local files: dir "`out'/_vintage" files "indicators_`calcset'*"
 	local vcnumbers: subinstr local files "indicators_`calcset'_" "", all
 	local vcnumbers: subinstr local vcnumbers ".dta" "", all
