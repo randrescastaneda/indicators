@@ -8,7 +8,7 @@
 
 program define indicators_report, rclass
 
-syntax, file(string)
+syntax, file(string) [ noi ]
 
 qui {
 	use "`file'", clear
@@ -18,24 +18,24 @@ qui {
 	count if (regexm(strofreal(comment), "0$"))
 	local nok = `r(N)'
 	
-	noi disp in w _dup(30) "-" " Countries OK" _dup(30) "-"
+	 disp in w _dup(30) "-" " Countries OK" _dup(30) "-"
 	if (`nok' != 0) {
 		local tabdispt `"tabdisp filename date  if (regexm(strofreal(comment), "0$")), c(comment time) concise  by(region)"'
-		noi disp `"{stata `tabdispt':OK table}"'
+		`noi' disp `"{stata `tabdispt':OK table}"'
 	}
-	else noi disp "no observation was ok"
+	else `noi' disp "no observation was ok"
 	
 	** Those with errors
 	count if (regexm(strofreal(comment), "[1-9]$"))
 	local nerr = `r(N)'
-	noi disp in w _dup(30) "-" " Countries with errors " _dup(30) "-"
+	 disp in w _dup(30) "-" " Countries with errors " _dup(30) "-"
 	if (`nerr' != 0) {
 		local tabdispt `"tabdisp filename  date if (regexm(strofreal(comment), "[1-9]$") & ok == 0), c(comment time) concise by(region)"'
-		noi `tabdispt'
-		noi disp `"{stata `tabdispt':NOT ok table}"'
+		`noi' `tabdispt'
+		`noi' disp `"{stata `tabdispt':NOT ok table}"'
 	}
-	else noi disp "no observation with Error"
-	noi disp in w "{hline}"
+	else `noi' disp "no observation with Error"
+	`noi' disp in w "{hline}"
 	
 	set trace off
 	
