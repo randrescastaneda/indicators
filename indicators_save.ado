@@ -16,7 +16,7 @@ Output:             dta files
 program define indicators_save
 syntax anything(name=calcset id="set of calculations"), /* 
  */  basename(string) out(string) /* 
- */  datetime(numlist) [ force pause ]
+ */  datetime(numlist) [ force pause vcnumber(numlist) ]
 
 
 if ("`pause'" == "pause") pause on
@@ -28,9 +28,13 @@ else                      pause off
 qui {
 // check whether file is the same as before
 * create temporal id
+
+// precase local for key indicators
 if ("`calcset'" == "key")  local precase "precase"
 else                       local precase ""
 
+
+// extract key for dates
 preserve 
 	keep date time datetime filename welfarevar `precase'
 	tempfile tkey
@@ -39,21 +43,30 @@ preserve
 restore 
 drop date time datetime 
 
+// confirm data has changed
 cap noi datasignature confirm using /* 
 */    "`out'/_datasignature/`basename'", strict
 if (_rc | "`force'" == "force") {
 	
-	* Set signature
+	//-------  Set signature
 	noi datasignature set, reset /* 
 	*/    saving("`out'/_datasignature/`basename'", replace)
 	noi datasignature set, reset /* 
 	*/    saving("`out'/_datasignature/`basename'_`datetime'", replace)
 	
+	// merge new dates
 	merge 1:1 filename welfarevar `precase' using `tkey', /* 
  */	 update replace nogen
  
+ 
 	* save files
-	save "`out'/_vintage/`basename'_`datetime'.dta", replace
+	if ("`vcnumber'" != "") {  // if it was restored
+		local vfilename "`basename'_`datetime'_rf_`vcnumber'.dta"
+	}
+	else {   // if it is new
+		local vfilename "`basename'_`datetime'.dta"
+	}
+	save "`out'/_vintage/`vfilename'", replace
 	save "`out'/`basename'_wide.dta", replace
 	
 	*------------------------------------------------
@@ -63,7 +76,6 @@ if (_rc | "`force'" == "force") {
 	*------ Remove all vc_ but the last one. 
 	drop if _touse != 1
 	
-			
 	local vars "filename datetime welfarevar `precase'"
 	
 	*----- indicator-specific modifications -----------

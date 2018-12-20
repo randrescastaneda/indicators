@@ -119,11 +119,34 @@ if ("`restore'" != "") {
 	local alldates ""
 	local i = 0
 	foreach vc of local vcnumbers {
+		
 		local ++i
-		if (length("`i'") < 2 ) local i = "0`i'"
-		local dispdate: disp %tcDDmonCCYY_HH:MM:SS `vc'
+		if (length("`i'") == 1 ) local i = "00`i'"
+		if (length("`i'") == 2 ) local i = "0`i'"
+		
+		if regexm("`vc'", "([0-9]+)_(rf)_([0-9]+)") {  // if version was restored 
+			local vc1 = regexs(1)
+			local vc2 = regexs(3)
+			local find = "restored from"
+		}
+		else {
+			local vc1  = "`vc'"
+			local vc2  = ""
+			local find = ""
+		}
+		
+		
+		local dispdate: disp %tcDDmonCCYY_HH:MM:SS `vc1'
 		local dispdate = trim("`dispdate'")
-		noi disp `"   `i' {c |} {stata `vc':`dispdate'}"'
+		
+		if ("`vc2'" != "") {
+			local dispdate2: disp %tcDDmonCCYY_HH:MM:SS `vc2'
+			local dispdate2 = trim("`dispdate2'")
+		}
+		
+		
+		noi disp `"   `i' {c |} {stata `vc1':`dispdate'} `find' `dispdate2'"'
+		
 		local alldates "`alldates' `dispdate'"
 	}
 	noi disp _n "select vintage control date from the list above" _request(_vcnumber)
@@ -139,8 +162,9 @@ if ("`restore'" != "") {
 	
 	use "`out'/_vintage/indicators_`calcset'_`vcnumber'.dta", clear
 	local basename "indicators_`calcset'"
+	
 	cap noi indicators_save `calcset', basename(`basename') out("`out'") /*  
-	*/  datetime(`datetime')
+	*/  datetime(`datetime') vcnumber(`vcnumber')
 	
 	* return local alldates = trim("`alldates'")
 }
