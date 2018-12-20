@@ -139,12 +139,12 @@ qui {
 	/*====================================================================
 	PURGE OR RESTORE
 	====================================================================*/
-	if ("`purge'" != "" | "`restore'" != "") {
+	if ("`restore'" != "") {
 		if (wordcount("`calcset'") != 1) {
 			noi disp in r "set of calculations must be one when using {it:purge} or {it:restore}"
 			error
 		}
-		noi indicators_purge `calcset', vcdate(`vcdate') keep(`keep') `purge' /* 
+		noi indicators_purge `calcset', vcdate(`vcdate') keep(`keep') /* 
 		*/  `restore' out("`out'") datetime(`datetime')
 		exit
 	}
@@ -719,63 +719,33 @@ qui {
 			
 			foreach calc of local calcset {
 				if !regexm("`calc'", "`allind_'") continue   // make sure 'report' or other don't go
-				use `wrk`calc'', clear                      
-				
-				pause `calc' - after open saved file 
-				
 				local basename "indicators_`calc'"
-				local file_wide "`out'/`basename'_wide.dta"
-				cap confirm new file "`file_wide'"
+				
+				
+				if ("`calc'" == "key")  local precase "precase"
+				else                    local precase ""
+				
+				
+				
+				// load current file and merge with new information
+				indicators `calc', load `pause'
+				cap confirm var datetime
+				if (_rc) _gendatetime, date("`date'") time("`time'")
+				
+				merge 1:1 filename welfarevar `precase' using `wrk`calc'', /* 
+				 */   update replace nogen 
+				
+				
+				cap `noi' indicators_touse `calc', `pause'
 				if (_rc) {
-					append using "`file_wide'"
-					replace welfarevar = "welfare" if welfarevar == "" 
-					
-					pause after append with master file
-					* -----Indicator-specific conditions------
-					if ("`calc'" == "pov") {
-						local e = 3
-						local dropvars "region countrycode year filename welfarevar fgt*"
-					}
-					if inlist("`calc'", "ine", "shp", "key") {
-						if ("`calc'" == "ine") local e = 2
-						if ("`calc'" == "shp") local e = 4
-						if ("`calc'" == "key") local e = 6
-						local dropvars "region countrycode year filename welfarevar values*"
-					}
-					
-					* sort and drop duplicates
-					gsort `dropvars' -datetime
-					pause `calc' - before droping vars
-					duplicates drop `dropvars', force
-					pause `calc' - After droping vars
-				}
-				
-				* Fix names of surveyid and files
-				local repovars filename
-				foreach var of local repovars {
-					replace `var' = upper(`var')
-					replace `var' = subinstr(`var', ".DTA", ".dta", .)
-					foreach x in 0 1 2 {
-						while regexm(`var', "_V`x'") {
-							replace `var' = regexr(`var', "_V`x'", "_v`x'")
-						}	
-					}
-				}
-				
-				* Vintage control
-				pause `calc' - Before creating vc_ variable
-				
-				cap noi indicators_vcontrol, `pause' /* 
-				 */  vars(region countrycode year survname type welfarevar)
-				if (_rc) {
-					disp in red "Err `calc' vcontrol"
+					disp in red "Err `calc' _touse variable"
 					post `ef' ("all") ("all") ("") ("") (`e'2)
 				}
-				pause `calc' - After creating vc_ variable
+				pause `calc' - After creating _touse variable
 				
 				* save file 
 				cap noi indicators_save `calc', basename(`basename') out("`out'") /*  
-				*/  datetime(`datetime') `force'
+				*/  datetime(`datetime') `force' `pause'
 				if (_rc) {
 					disp in red "Err `calc' saving"
 					post `ef' ("all") ("all") ("") ("") (`e'3)
@@ -863,6 +833,7 @@ qui {
 	*--------------------4.1:
 	if regexm("`trace'", "err") set trace on
 	postclose `ef'
+	
 	use `errfile', clear
 	label define comment ///
 	11  "datalibweb didn't load file"  ///
@@ -900,7 +871,7 @@ qui {
 			if (regexm(strofreal(comment), "[1-9]$")), force
 		}
 		
-		else noi disp "No observation with error"
+		else `noi' disp "No observation with error"
 		
 		/* drop duplicated OK messages and leave the latest. 
 		we leave the latest because it vould be the case that
@@ -925,10 +896,10 @@ qui {
 			cap confirm var ok
 			if (_rc) gen ok = 0
 		}
-		noi disp in w "{hline}"
+		`noi' disp in w "{hline}"
 		
 		save "`masterr'", replace
-		noi indicators_report , file("`masterr'")
+		indicators_report , file("`masterr'") `noi'
 	}
 	
 } // end of qui
@@ -951,10 +922,12 @@ syntax , [date(string) time(string)]
 if ("`date'" == "") local date = c(current_date)
 if ("`time'" == "") local time = c(current_time)
 
-gen double date = date("`date'", "DMY")
+cap confirm var date
+if (_rc) gen double date = date("`date'", "DMY")
 format date %td
 
-gen double time = clock("`time'", "hms")
+cap confirm var time
+if (_rc) gen double time = clock("`time'", "hms")
 format time %tcHH:MM:SS
 
 // I do it this way to understand the relation
