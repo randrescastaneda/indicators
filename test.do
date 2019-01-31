@@ -7,3 +7,5 @@ reg price trunk
 describe 
 test price = 6100
 
+tab price mpg
+
