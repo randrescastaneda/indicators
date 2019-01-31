@@ -1,3 +1,5 @@
 
 sysuse auto, clear
-sum mpg
+sum price
+reg mpg trunk
+
