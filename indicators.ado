@@ -130,9 +130,17 @@ qui {
 		if !inlist("`shape'", "wide", "long") {
 			noi disp in r "shape can me wide or long only"
 		}
-		use "`out'/indicators_`calcset'_`shape'.dta", clear
-		noi disp "indicators_`calcset'_`shape'.dta loaded"
-		return local filename = "indicators_`calcset'_`shape'.dta"
+		
+		if ("`vcdate'" != "") {
+			noi indicators_purge `calcset', vcdate(`vcdate') /* 
+			*/  `restore' out("`out'") datetime(`datetime') `load'
+			return add 
+		}
+		else {
+			use "`out'/indicators_`calcset'_`shape'.dta", clear
+			noi disp "indicators_`calcset'_`shape'.dta loaded"
+			return local filename = "indicators_`calcset'_`shape'.dta"
+		}
 		exit
 	}
 	
@@ -144,7 +152,7 @@ qui {
 			noi disp in r "set of calculations must be one when using {it:purge} or {it:restore}"
 			error
 		}
-		noi indicators_purge `calcset', vcdate(`vcdate') keep(`keep') /* 
+		noi indicators_purge `calcset', vcdate(`vcdate')  /* 
 		*/  `restore' out("`out'") datetime(`datetime')
 		exit
 	}

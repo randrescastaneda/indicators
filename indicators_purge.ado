@@ -15,36 +15,19 @@ Output:             dta file purged
 ==================================================*/
 program define indicators_purge, rclass
 syntax anything(name=calcset id="set of calculations"), /* 
-*/ [ vcdate(string) keep(string) purge restore out(string) datetime(numlist)]
+  */   [ vcdate(string)     /* 
+  */  restore out(string)   /* 
+  */  datetime(numlist)     /* 
+  */	load ]
 
 version 14
 
 *-------------------- Conditions --------------------------
 
-if (("`restore'" != "" & "`purge'" != "") | /* 
-*/  ("`restore'" == "" & "`purge'" == "")) {
-	noi disp in r "you must select either {it:purge} or {it:restore}"
+if (("`restore'" != "" & "`load'" != "") | /* 
+*/  ("`restore'" == "" & "`load'" == "")) {
+	noi disp in r "you must select either {it:load} or {it:restore}"
 	error
-}
-
-if ("`keep'" == "" & "`purge'" != "") {
-	noi disp in red "option {it:keep()} must be either before or after " _n /* 
-	*/ "when used with option {it:purge}"
-	error
-}
-
-if !inlist("`keep'", "before", "after", "") {
-	noi disp in red "option {it:keep()} must be either before or after"
-	error
-}
-
-if ("`vcdate'" != "") {
-	if (!regexm("`vcdate'", "^[0-9]+[a-z]+[0-9]+$") | length("`vcdate'")!= 9) {
-		local datesample: disp %tdDDmonCCYY date("`c(current_date)'", "DMY")
-		noi disp as err "vcdate() format must be %tdDDmonCCYY, e.g " _c /* 
-		*/ `"{cmd:`=trim("`datesample'")'}"' _n
-		error
-	}
 }
 
 
@@ -106,7 +89,7 @@ if ("`purge'" != "") {
 2: Restore Data
 ==================================================*/
 
-if ("`restore'" != "") {
+if ("`restore'" != "" | "`load'" != "") {
 
 	local files: dir "`out'/_vintage" files "indicators_`calcset'*"
 	local vcnumbers: subinstr local files "indicators_`calcset'_" "", all
@@ -149,22 +132,54 @@ if ("`restore'" != "") {
 		
 		local alldates "`alldates' `dispdate'"
 	}
-	noi disp _n "select vintage control date from the list above" _request(_vcnumber)
-	local vcdate: disp %tcDDmonCCYY_HH:MM:SS `vcnumber' 
 	
-	confirm file "`out'/_vintage/indicators_`calcset'_`vcnumber'.dta"
+	if (inlist("`vcdate'" , "", "pick", "choose")) {
+		noi disp _n "select vintage control date from the list above" _request(_vcnumber)
+		local vcdate: disp %tcDDmonCCYY_HH:MM:SS `vcnumber' 
+	}
+	else {
+		cap confirm number `vcdate'
+		if (_rc ==0) {
+			local vcnumber = `vcdate'
+			local vcdate: disp %tcDDmonCCYY_HH:MM:SS `vcnumber'
+		}
+		else {
+			if (!regexm("`vcdate'", "^[0-9]+[a-z]+[0-9]+ [0-9]+:[0-9]+:[0-9]+$") /* 
+			 */ | length("`vcdate'")!= 18) {
+			 
+				local datesample: disp %tcDDmonCCYY_HH:MM:SS /* 
+				 */   clock("`c(current_date)' `c(current_time)'", "DMYhms")
+				noi disp as err "vcdate() format must be %tdDDmonCCYY, e.g " _c /* 
+				 */ `"{cmd:`=trim("`datesample'")'}"' _n
+				 error
+			}
+			local vcnumber: disp %13.0f clock("`vcdate'", "DMYhms")
+		}
 	
-	cap window stopbox rusure /* 
-	*/  "You are about to replace current indicators_`calcset' files with "  /* 
-	*/  "file indicators_`calcset'_`vcnumber' from `vcdate'" /* 
-	*/  "Are you sure want to make that change?"
-	if (_rc != 0) error
+	}
+
+	local filename: dir "`out'/_vintage" files "indicators_`calcset'_`vcnumber'*.dta"
+	local loadfile = "`out'/_vintage/"+`filename'
+	* confirm file "`out'/_vintage/`filename'"
+	* use "`out'/_vintage/`filename'", clear
+	confirm file "`loadfile'"
+	use "`loadfile'", clear
+	noi disp in y "file " in w `filename' in y " was loaded"
 	
-	use "`out'/_vintage/indicators_`calcset'_`vcnumber'.dta", clear
-	local basename "indicators_`calcset'"
+	return local filename `filename'
 	
-	cap noi indicators_save `calcset', basename(`basename') out("`out'") /*  
-	*/  datetime(`datetime') vcnumber(`vcnumber')
+	if ("`restore'" != "") {
+		cap window stopbox rusure /* 
+		*/  "You are about to replace current indicators_`calcset' files with "  /* 
+		*/  "file indicators_`calcset'_`vcnumber' from `vcdate'" /* 
+		*/  "Are you sure want to make that change?"
+		if (_rc != 0) error
+
+		local basename "indicators_`calcset'"		
+		cap noi indicators_save `calcset', basename(`basename') out("`out'") /*  
+		*/  datetime(`datetime') vcnumber(`vcnumber')
+	}
+	
 	
 	* return local alldates = trim("`alldates'")
 }

@@ -66,7 +66,8 @@ the repository of GMD collection using {help datalibweb}{p_end}
 {it:createrepo}{p_end}
 
 {syntab:Load data}
-{synopt:{opt load}} Loads the data file corresponding to {it:instruction}{p_end}
+{synopt:{opt load}} Loads the data file corresponding to {it:instruction}. 
+See option {it:vcdate()} below.{p_end}
 {synopt:{opt shape(string)}} Shape of the file corresponding to the set of calculations. 
 It can be either wide or long. default is wide.{p_end}
 {syntab:Debugging}
@@ -77,20 +78,14 @@ for debugging purposes. see {help pause}{p_end}
 process in which {it:instruction} is executed.{p_end}
 
 {syntab:Advanced}
-{synopt:{opt vcdate(string)}} Vintage control date. For now, only works with the 
-repository file. {err: will be added to loading options}{p_end}
-{synopt:{opt welfare:vars(string)}} set of welfare variables to use for calculations. 
-Default is "welfare welfshprosperity welfareused welfarenom welfaredef welfareother 
-pcexp pcinc"{p_end}
-
-{syntab:Purge and Restore}
-{synopt:{opt purge}} Purge output files from a particular vc_ date. requires 
-{it:keep(before|after)}{p_end}
-{synopt:{opt keep(string)}} specifies whether the purge has to be done before or 
-after the selected date. No default. {p_end}
+{synopt:{opt vcdate(string)}} Vintage control date. It works with set of indicators and 
+repo files. It also works with options {it:load} and {it:restore}  {p_end}
 {synopt:{opt restore}} Restore output files form any previous vintage.{p_end}
 
 {syntab:Seldom used}
+{synopt:{opt welfare:vars(string)}} set of welfare variables to use for calculations. 
+Default is "welfare welfshprosperity welfareused welfarenom welfaredef welfareother 
+pcexp pcinc"{p_end}
 {synopt:{opt reg:ions(string)}} Perform calculations by countries of the same region.{p_end}
 {synopt:{opt mod:ule(string)}} Perform calculations for a specific module of GMD{p_end}
 {synopt:{opt plines(string)}} Poverty lines for poverty. Default is "1.9 3.2 5.5"{p_end}
@@ -328,7 +323,7 @@ how it could be done, but keep in mind that
 
 
 {marker options}{...}
-{title:Options}
+{title:Options} {err:This section is in process}
 {dlgtab:Main}
 {phang}
 {opt coun:tries(string)} Set of three-digit country codes using WDI standard. Note 
@@ -428,7 +423,7 @@ For this example, it would be Mexico, 2016, PovCalNet collection.
 {p 10 10 2}. indicators shp, countries(MEX) year(2016) type(PCN){p_end}
 
 {phang}[4]Calculate all indicators for all databases. {err: This function may take }
-{err:more than 10 hours to run, for it will perform calculations for almost 3000 files.}
+{err:more than 10 hours to run, for it loads about 3,000 files.}
 
 {p 10 10 2}. indicators all, countries(all){p_end}
 
@@ -443,9 +438,9 @@ specified, then error.
 
 {p 10 10 2}. indicators repo, createrepo gpwg2{p_end}
 
-{dlgtab:Load data and report file}
+{dlgtab:Load data}
 
-{phang}[1]Load indicators file with poverty estimates (Wide format).
+{phang}[1]Load last version available of indicators file with poverty estimates (Wide format).
 
 {p 10 10 2}. indicators pov, load{p_end}
 
@@ -453,45 +448,56 @@ specified, then error.
 
 {p 10 10 2}. indicators ine, load shape(long){p_end}
 
-{phang}[3]Load repository file (No long format available)
+{phang}[3]Select vintage version to restore file indicators_ine to a particular version. 
+This is possible only by clicking in the Stata results window. Two variations:
+
+{p 10 10 2}. indicators ine, load vcdate(pick){p_end}
+{p 10 10 2}. indicators ine, load vcdate(chooose){p_end}
+
+{phang}[4]load indicators_ine to a particular version. This is possible only by 
+specifying the exact date and time ({err:Note the syntax similarity to option restore}). 
+Two variations:
+
+{p 10 10 2}. indicators ine, {it:load} vcdate(20dec2018 15:43:40){p_end}
+{p 10 10 2}. indicators ine, {it:load} vcdate(1860939820000){p_end}
+
+
+{dlgtab:Load repository or report file}
+{phang}[1]Load repository file (No long format available)
 
 {p 10 10 2}. indicators repo, load {p_end}
 
-{phang}[4]Load Report file of error and success of the process. Note that option 
+{phang}[2]Load Report file of error and success of the process. Note that option 
 {it:load} is not required
 
 {p 10 10 2}. indicators report{p_end}
 
-{dlgtab:Purge and Restore}
+{dlgtab:Restore}
 
-{phang}[1]Purge indicators_ine* files BEFORE 30jun2018. This option is used when all
-data is making the files unnecessarily big. Note that 30jun2018 is not part of
-the vintages available. This is intentionally done to avoid involuntary deletions. 
-
-{p 10 10 2}. indicators ine, purge keep(after) vcdate(30jun2018){p_end}
-
-
-{phang}[2]Purge indictors_ine by selecting the date with clicks. Note that option 
-{it:keep()} is required when using {it:purge}. {err: Executing the code below and }
-{err:selecting any of the available dates in the screen will delete import information. }
-{err:Make sure you understand function {it:restore} before continuing.}
-
-{p 10 10 2}. indicators ine, purge keep(after){p_end}
-
-{phang}[3]Restore indicators_ine to a particular version. This is possible only by 
-cliking in the Stata results window. 
+{phang}[1]Select vintage version to restore file indicators_ine to a particular version. 
+This is possible only by clicking in the Stata results window. Three variations:
 
 {p 10 10 2}. indicators ine, restore{p_end}
+{p 10 10 2}. indicators ine, restore vcdate(pick){p_end}
+{p 10 10 2}. indicators ine, restore vcdate(chooose){p_end}
+
+{phang}[2]Restore indicators_ine to a particular version. This is possible only by 
+specifying the exact date and time ({err:Note the syntax similarity to option load}). 
+Two variations:
+
+{p 10 10 2}. indicators ine, {err:restore} vcdate(20dec2018 15:43:40){p_end}
+{p 10 10 2}. indicators ine, {err:restore} vcdate(1860939820000){p_end}
+
 
 {marker files}{...}
-{title:Explanation of files}
+{title:Explanation of files}{err: Section in process}
 
 {pstd}
 The {cmd:indicators} package is composed of one involving routing, indicators.ado, and
 several independent subroutines, indicators_*.ado. 
 
 {phang}
-{opt indicators.ado} oeifjapoweifj 
+{opt indicators.ado}  
 
 
 {title:Author}
