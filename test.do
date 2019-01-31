@@ -1,3 +1,9 @@
 
 sysuse auto, clear
-sum mpg
+sum price
+reg mpg trunk
+reg price trunk
+
+describe 
+test price = 6100
+
