@@ -132,7 +132,7 @@ qui {
 		}
 		
 		if ("`vcdate'" != "") {
-			noi indicators_purge `calcset', vcdate(`vcdate') /* 
+			noi indicators_purge `calcset', vcdate(`vcdate') shape(`shape') /* 
 			*/  `restore' out("`out'") datetime(`datetime') `load'
 			return add 
 		}

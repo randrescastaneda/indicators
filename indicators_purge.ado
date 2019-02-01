@@ -18,6 +18,7 @@ syntax anything(name=calcset id="set of calculations"), /*
   */   [ vcdate(string)     /* 
   */  restore out(string)   /* 
   */  datetime(numlist)     /* 
+  */  shape(string)     /* 
   */	load ]
 
 version 14
@@ -179,6 +180,9 @@ if ("`restore'" != "" | "`load'" != "") {
 		cap noi indicators_save `calcset', basename(`basename') out("`out'") /*  
 		*/  datetime(`datetime') vcnumber(`vcnumber')
 	}
+	if ("`load'" != "" & "`shape'" == "long") {
+		indicators_reshape_long `calcset'
+	} 
 	
 	
 	* return local alldates = trim("`alldates'")
