@@ -24,6 +24,7 @@ syntax anything(name=calcset id="set of calculations"), /*
 version 14
 
 *-------------------- Conditions --------------------------
+qui {
 
 if (("`restore'" != "" & "`load'" != "") | /* 
 */  ("`restore'" == "" & "`load'" == "")) {
@@ -160,7 +161,7 @@ if ("`restore'" != "" | "`load'" != "") {
 	}
 
 	local filename: dir "`out'/_vintage" files "indicators_`calcset'_`vcnumber'*.dta"
-	if ("`filename'" == "") {
+	if (`"`filename'"' == "") {
 		noi disp in r "there is no file indicators_`calcset'_`vcnumber'*.dta in vintage"
 		error
 	}
@@ -192,7 +193,7 @@ if ("`restore'" != "" | "`load'" != "") {
 	* return local alldates = trim("`alldates'")
 }
 
-
+}
 
 
 end

@@ -62,6 +62,8 @@ if (_rc | "`force'" == "force") {
 	* save files
 	if ("`vcnumber'" != "") {  // if it was restored
 		local vfilename "`basename'_`datetime'_rf_`vcnumber'.dta"
+		local datetimeHRF_rf: disp %tcDDmonCCYY_HH:MM:SS `vcnumber'
+		local datetimeHRF_rf = trim("`dispdate'")
 	}
 	else {   // if it is new
 		local vfilename "`basename'_`datetime'.dta"
@@ -70,11 +72,17 @@ if (_rc | "`force'" == "force") {
 	*------------------------------------------------
 	*------- Create characteristics of file ---------
 	*------------------------------------------------
-	char _dta[datetime] "`datetime'"
-	char _dta[basename] "`basename'"
-	char _dta[vcnumber] "`vcnumber'"
-	char _dta[calcset]  "`calcset'"
-	char _dta[shape]    "wide"
+	local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
+	local datetimeHRF = trim("`dispdate'")
+	
+	
+	char _dta[datetimeSIF]    "`datetime'"
+	char _dta[datetimeHRF]    "`datetimeHRF'"
+	char _dta[datetimeSIF_rf] "`vcnumber'"
+	char _dta[datetimeHRF_rf] "`datetimeHRF_rf'"
+	char _dta[basename]       "`basename'"
+	char _dta[calcset]        "`calcset'"
+	char _dta[shape]          "wide"
 	
 	
 	*------------------------------------------------
@@ -131,10 +139,28 @@ exit
 ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
 
 Notes:
-1.
+1. Important locals to use in other programs
+
+
+local datasignature_si  : char  _dta[datasignature_si] 
+local datetimeSIF       : char  _dta[datetimeSIF]      
+local datetimeHRF       : char  _dta[datetimeHRF]      
+local datetimeSIF_rf    : char  _dta[datetimeSIF_rf]   
+local datetimeHRF_rf    : char  _dta[datetimeHRF_rf]     
+local shape             : char  _dta[shape]          
+local calcset           : char  _dta[calcset]          
+
+
 2.
 3.
 
 
 Version Control:
-	
+
+
+
+
+
+
+
+

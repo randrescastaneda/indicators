@@ -517,6 +517,23 @@ several independent subroutines, indicators_*.ado.
 {opt indicators.ado}  
 
 
+{marker results}{...}
+{title:Stored results}
+
+{pstd}
+{cmd:indicators} stores the following characteristics:
+
+{p2colset 10 34 34 4}
+{p2col:{cmd:_dta[datasignature_si] }}data signature{p_end}
+{p2col:{cmd:_dta[datetimeSIF]      }}date and time of creation in Stata internal form {help datetime##s2:SIF}{p_end}
+{p2col:{cmd:_dta[datetimeHRF]      }}date and time of creation in Human readable form {help datetime##s2:HRF}{p_end}
+{p2col:{cmd:_dta[datetimeSIF_rf]   }}date and time of restoring file in SIF{p_end}
+{p2col:{cmd:_dta[datetimeHRF_rf]   }}date and time of restoring file in HRF{p_end}
+{p2col:{cmd:_dta[shape]            }}Shape of data{p_end}
+{p2col:{cmd:_dta[calcset]          }}set of calculations{p_end}
+
+
+
 {title:Author}
 {p}
 
