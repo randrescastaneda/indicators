@@ -66,6 +66,21 @@ if (_rc | "`force'" == "force") {
 	else {   // if it is new
 		local vfilename "`basename'_`datetime'.dta"
 	}
+	
+	*------------------------------------------------
+	*------- Create characteristics of file ---------
+	*------------------------------------------------
+	char _dta[datetime] "`datetime'"
+	char _dta[basename] "`basename'"
+	char _dta[vcnumber] "`vcnumber'"
+	char _dta[calcset]  "`calcset'"
+	char _dta[shape]    "wide"
+	
+	
+	*------------------------------------------------
+	*------- Save in wide format---------
+	*------------------------------------------------
+	
 	save "`out'/_vintage/`vfilename'", replace
 	save "`out'/`basename'_wide.dta", replace
 	
@@ -73,54 +88,8 @@ if (_rc | "`force'" == "force") {
 	*------------ convert to long--------------------
 	*------------------------------------------------
 	
-	*------ Remove all vc_ but the last one. 
-	drop if _touse != 1
-	
-	local vars "filename datetime welfarevar `precase'"
-	
-	*----- indicator-specific modifications -----------
-	if inlist("`calcset'", "ine", "shp") {
-		reshape long values, i(`vars') j(case) string
-		
-		order region countrycode year filename welfarevar case values
-	}
-	else if inlist("`calcset'", "key") {
-		reshape long values, i(`vars') j(case) string
-		
-		replace case = precase+case
-		drop precase
-		order region countrycode year filename welfarevar case values
-	}	
-	else if ("`calcset'" == "pov") { // Poverty case
-		
-		reshape long fgt0_ fgt1_ fgt2_, i(`vars') j(line)
-		rename fgt*_ fgt*
-		
-		reshape long fgt, i(`vars' line) j(FGT)
-		rename (FGT fgt) (fgt values)
-		order region countrycode year filename welfarevar line fgt values
-	}		
-	else if ("`calcset'" == "wdi") { // WDI indicators
-		des, varlist
-		local wdivars = "`r(varlist)'"
-		foreach var of local wdivars {
-			if regexm("`var'", "vc_") continue
-			if regexm("`var'", "_") local indvars "`indvars' `var'"
-		}
-		rename (`indvars') values=
-		
-		cap des vc_*, varlist
-		if (_rc ==0) local vcvars = "`r(varlist)'"
-		else         local vcvars = ""
-		
-		reshape long values, i(regioncode countrycode year date time `vcvars') j(case) string
-	}
-	else {
-		disp as err "calculation invalid"
-		error
-	}
-	
-save "`out'/`basename'_long.dta", replace
+	indicators_reshape_long `calcset'
+	save "`out'/`basename'_long.dta", replace
 }
 else {
 noi disp "files `basename'* are identical to last version"
