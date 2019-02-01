@@ -160,6 +160,10 @@ if ("`restore'" != "" | "`load'" != "") {
 	}
 
 	local filename: dir "`out'/_vintage" files "indicators_`calcset'_`vcnumber'*.dta"
+	if ("`filename'" == "") {
+		noi disp in r "there is no file indicators_`calcset'_`vcnumber'*.dta in vintage"
+		error
+	}
 	local loadfile = "`out'/_vintage/"+`filename'
 	* confirm file "`out'/_vintage/`filename'"
 	* use "`out'/_vintage/`filename'", clear
@@ -181,7 +185,7 @@ if ("`restore'" != "" | "`load'" != "") {
 		*/  datetime(`datetime') vcnumber(`vcnumber')
 	}
 	if ("`load'" != "" & "`shape'" == "long") {
-		indicators_reshape_long `calcset'
+		qui indicators_reshape_long `calcset'
 	} 
 	
 	
