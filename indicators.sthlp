@@ -303,25 +303,6 @@ main repository file. This collection is named GPWG2 and its module is UDB-C.
 {opt report} loads the report file, {stata indicators report:indicators_report.dta}, and 
 display a couple of tables with some information. {err: this function is under development}. 
 
-{marker vc_vars}{...}
-{title: vc_* variables}
-
-{pstd}
-Most of the files in the {cmd:indicators} package have a set of variables with the 
-prefix 'vc_' that stands for 'vintage control'. In all the files produced as output of 
-set of calculations (e.g., pov, ine, shp...) the binary vc_* variables take the value of 
-1 for the most recent value every single indicators at the level of file name and welfare 
-variable, and 0 for the rest. In this way, the user can select latest calculations by 
-filtering the data with the vc_ variables. For now, the following example illustrates 
-how it could be done, but keep in mind that
-{err: it must be updated to proper {cmd:indicators} syntax}.
-		
-{p 8 10 2}. indicators pov, load{p_end}
-{p 8 10 2}. indicators_vcselect, maxdate {err: // needs to be updated} {p_end}
-{p 8 10 2}. local vcvar = "`r(maxdate)'"{p_end}
-{p 8 10 2}. keep if `vcvar' == 1{p_end}
-
-
 {marker options}{...}
 {title:Options} {err:This section is in process}
 {dlgtab:Main}
