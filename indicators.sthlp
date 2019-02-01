@@ -352,7 +352,12 @@ shorthand like "all" to refer to a larger set of countries.
 
 {dlgtab:Load data}
 {phang}
-{opt load}  
+{opt load} This option allows the user to load any file created by {cmd:instructions}. 
+The basic syntax is {cmd:indicators {it:instruction}, load}, where {it:instruction} refers 
+to a set of {help indicators##calcset:calculations} or the repo file. By using option 
+{it:shape()} the user may request the data in long format, as the default is wide format. 
+In addition, the user may load any vintage version by using the option 
+{help indicators##vcdate:{it:vcdate()}}. See this example {help indicators##loadex1:below}.
 
 {phang}
 {opt shape(string)}  
@@ -367,10 +372,16 @@ shorthand like "all" to refer to a larger set of countries.
 {phang}
 {opt noi}  
 
-
+{marker vcdate}{...}
 {dlgtab:Advanced}
 {phang}
-{opt vcdate(string)}  
+{opt vcdate(string)} Select any vintage version of the data requested. There are 
+two variations of this option [1] {cmd:vcdate}(pick) or {cmd:vcdate}(choose), in which
+data displays all the versions available in the results window so that the user can click 
+on the version desired. [2] {cmd:vcdate}({it:date}) in {it:date} could be entered in two ways, 
+[2.1] %tcDDmonCCYY_HH:MM:SS date-time form such as '30jan2019 15:17:56' or [2.2] in 
+Stata internal form {help datetime##s2:SIF} like 1864480676000. Notice that, 
+{cmd:disp %13.0f clock("30jan2019 15:17:56", "DMYhms")} results in 1864480676000.
 
 {phang}
 {opt welfare:vars(string)}  
@@ -458,8 +469,14 @@ This is possible only by clicking in the Stata results window. Two variations:
 specifying the exact date and time ({err:Note the syntax similarity to option restore}). 
 Two variations:
 
-{p 10 10 2}. indicators ine, {it:load} vcdate(20dec2018 15:43:40){p_end}
-{p 10 10 2}. indicators ine, {it:load} vcdate(1860939820000){p_end}
+{p 10 10 2}. indicators ine, {it:load} vcdate(20dec2018 15:51:03){p_end}
+{p 10 10 2}. indicators ine, {it:load} vcdate(1860940263000){p_end}
+
+{marker loadex1}{...}
+{phang}[5]The same as example [4] above but in long format
+
+{p 10 10 2}. indicators ine, {it:load} vcdate(20dec2018 15:51:03) shape(long){p_end}
+{p 10 10 2}. indicators ine, {it:load} vcdate(1860940263000) shape(long){p_end}
 
 
 {dlgtab:Load repository or report file}
@@ -485,8 +502,8 @@ This is possible only by clicking in the Stata results window. Three variations:
 specifying the exact date and time ({err:Note the syntax similarity to option load}). 
 Two variations:
 
-{p 10 10 2}. indicators ine, {err:restore} vcdate(20dec2018 15:43:40){p_end}
-{p 10 10 2}. indicators ine, {err:restore} vcdate(1860939820000){p_end}
+{p 10 10 2}. indicators ine, {err:restore} vcdate(20dec2018 15:51:03){p_end}
+{p 10 10 2}. indicators ine, {err:restore} vcdate(1860940263000){p_end}
 
 
 {marker files}{...}
