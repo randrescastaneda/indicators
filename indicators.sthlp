@@ -303,25 +303,6 @@ main repository file. This collection is named GPWG2 and its module is UDB-C.
 {opt report} loads the report file, {stata indicators report:indicators_report.dta}, and 
 display a couple of tables with some information. {err: this function is under development}. 
 
-{marker vc_vars}{...}
-{title: vc_* variables}
-
-{pstd}
-Most of the files in the {cmd:indicators} package have a set of variables with the 
-prefix 'vc_' that stands for 'vintage control'. In all the files produced as output of 
-set of calculations (e.g., pov, ine, shp...) the binary vc_* variables take the value of 
-1 for the most recent value every single indicators at the level of file name and welfare 
-variable, and 0 for the rest. In this way, the user can select latest calculations by 
-filtering the data with the vc_ variables. For now, the following example illustrates 
-how it could be done, but keep in mind that
-{err: it must be updated to proper {cmd:indicators} syntax}.
-		
-{p 8 10 2}. indicators pov, load{p_end}
-{p 8 10 2}. indicators_vcselect, maxdate {err: // needs to be updated} {p_end}
-{p 8 10 2}. local vcvar = "`r(maxdate)'"{p_end}
-{p 8 10 2}. keep if `vcvar' == 1{p_end}
-
-
 {marker options}{...}
 {title:Options} {err:This section is in process}
 {dlgtab:Main}
@@ -352,7 +333,12 @@ shorthand like "all" to refer to a larger set of countries.
 
 {dlgtab:Load data}
 {phang}
-{opt load}  
+{opt load} This option allows the user to load any file created by {cmd:instructions}. 
+The basic syntax is {cmd:indicators {it:instruction}, load}, where {it:instruction} refers 
+to a set of {help indicators##calcset:calculations} or the repo file. By using option 
+{it:shape()} the user may request the data in long format, as the default is wide format. 
+In addition, the user may load any vintage version by using the option 
+{help indicators##vcdate:{it:vcdate()}}. See this example {help indicators##loadex1:below}.
 
 {phang}
 {opt shape(string)}  
@@ -367,10 +353,16 @@ shorthand like "all" to refer to a larger set of countries.
 {phang}
 {opt noi}  
 
-
+{marker vcdate}{...}
 {dlgtab:Advanced}
 {phang}
-{opt vcdate(string)}  
+{opt vcdate(string)} Select any vintage version of the data requested. There are 
+two variations of this option [1] {cmd:vcdate}(pick) or {cmd:vcdate}(choose), in which
+data displays all the versions available in the results window so that the user can click 
+on the version desired. [2] {cmd:vcdate}({it:date}) in {it:date} could be entered in two ways, 
+[2.1] %tcDDmonCCYY_HH:MM:SS date-time form such as '30jan2019 15:17:56' or [2.2] in 
+Stata internal form {help datetime##s2:SIF} like 1864480676000. Notice that, 
+{cmd:disp %13.0f clock("30jan2019 15:17:56", "DMYhms")} results in 1864480676000.
 
 {phang}
 {opt welfare:vars(string)}  
@@ -458,8 +450,14 @@ This is possible only by clicking in the Stata results window. Two variations:
 specifying the exact date and time ({err:Note the syntax similarity to option restore}). 
 Two variations:
 
-{p 10 10 2}. indicators ine, {it:load} vcdate(20dec2018 15:43:40){p_end}
-{p 10 10 2}. indicators ine, {it:load} vcdate(1860939820000){p_end}
+{p 10 10 2}. indicators ine, {it:load} vcdate(20dec2018 15:51:03){p_end}
+{p 10 10 2}. indicators ine, {it:load} vcdate(1860940263000){p_end}
+
+{marker loadex1}{...}
+{phang}[5]The same as example [4] above but in long format
+
+{p 10 10 2}. indicators ine, {it:load} vcdate(20dec2018 15:51:03) shape(long){p_end}
+{p 10 10 2}. indicators ine, {it:load} vcdate(1860940263000) shape(long){p_end}
 
 
 {dlgtab:Load repository or report file}
@@ -485,8 +483,8 @@ This is possible only by clicking in the Stata results window. Three variations:
 specifying the exact date and time ({err:Note the syntax similarity to option load}). 
 Two variations:
 
-{p 10 10 2}. indicators ine, {err:restore} vcdate(20dec2018 15:43:40){p_end}
-{p 10 10 2}. indicators ine, {err:restore} vcdate(1860939820000){p_end}
+{p 10 10 2}. indicators ine, {err:restore} vcdate(20dec2018 15:51:03){p_end}
+{p 10 10 2}. indicators ine, {err:restore} vcdate(1860940263000){p_end}
 
 
 {marker files}{...}
@@ -498,6 +496,23 @@ several independent subroutines, indicators_*.ado.
 
 {phang}
 {opt indicators.ado}  
+
+
+{marker results}{...}
+{title:Stored results}
+
+{pstd}
+{cmd:indicators} stores the following characteristics:
+
+{p2colset 10 34 34 4}
+{p2col:{cmd:_dta[datasignature_si] }}data signature{p_end}
+{p2col:{cmd:_dta[datetimeSIF]      }}date and time of creation in Stata internal form {help datetime##s2:SIF}{p_end}
+{p2col:{cmd:_dta[datetimeHRF]      }}date and time of creation in Human readable form {help datetime##s2:HRF}{p_end}
+{p2col:{cmd:_dta[datetimeSIF_rf]   }}date and time of restoring file in SIF{p_end}
+{p2col:{cmd:_dta[datetimeHRF_rf]   }}date and time of restoring file in HRF{p_end}
+{p2col:{cmd:_dta[shape]            }}Shape of data{p_end}
+{p2col:{cmd:_dta[calcset]          }}set of calculations{p_end}
+
 
 
 {title:Author}

@@ -98,6 +98,15 @@ qui {
 		error
 	}
 	
+	* vcdate
+	if ("`vcdate'" != "") {
+		if !inlist("`vcdate'" , "pick", "choose") {
+			noi disp in red "{it:vcdate()} must be either {it:pick} or {it:choose}"
+			error
+		}
+	}
+	
+	
 	*------------------ SSC commands  ------------------
 	local sscados "groupfunction wbopendata quantiles tabstatmat missings"
 	foreach ado of local sscados {
@@ -132,7 +141,7 @@ qui {
 		}
 		
 		if ("`vcdate'" != "") {
-			noi indicators_purge `calcset', vcdate(`vcdate') /* 
+			noi indicators_purge `calcset', vcdate(`vcdate') shape(`shape') /* 
 			*/  `restore' out("`out'") datetime(`datetime') `load'
 			return add 
 		}

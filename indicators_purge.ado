@@ -18,11 +18,13 @@ syntax anything(name=calcset id="set of calculations"), /*
   */   [ vcdate(string)     /* 
   */  restore out(string)   /* 
   */  datetime(numlist)     /* 
+  */  shape(string)     /* 
   */	load ]
 
 version 14
 
 *-------------------- Conditions --------------------------
+qui {
 
 if (("`restore'" != "" & "`load'" != "") | /* 
 */  ("`restore'" == "" & "`load'" == "")) {
@@ -159,6 +161,10 @@ if ("`restore'" != "" | "`load'" != "") {
 	}
 
 	local filename: dir "`out'/_vintage" files "indicators_`calcset'_`vcnumber'*.dta"
+	if (`"`filename'"' == "") {
+		noi disp in r "there is no file indicators_`calcset'_`vcnumber'*.dta in vintage"
+		error
+	}
 	local loadfile = "`out'/_vintage/"+`filename'
 	* confirm file "`out'/_vintage/`filename'"
 	* use "`out'/_vintage/`filename'", clear
@@ -179,12 +185,15 @@ if ("`restore'" != "" | "`load'" != "") {
 		cap noi indicators_save `calcset', basename(`basename') out("`out'") /*  
 		*/  datetime(`datetime') vcnumber(`vcnumber')
 	}
+	if ("`load'" != "" & "`shape'" == "long") {
+		qui indicators_reshape_long `calcset'
+	} 
 	
 	
 	* return local alldates = trim("`alldates'")
 }
 
-
+}
 
 
 end
