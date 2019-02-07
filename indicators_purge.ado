@@ -100,7 +100,7 @@ if ("`restore'" != "" | "`load'" != "") {
 
 	local vcnumbers: list sort vcnumbers
 	* return local vcnumbers = "`vcnumbers'"
-	noi disp in y "list of available vintage control dates for file indicators_`calcset'"
+	noi disp in y "list of available vintage control dates for file " in g "indicators_`calcset'"
 	local alldates ""
 	local i = 0
 	foreach vc of local vcnumbers {

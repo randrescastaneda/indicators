@@ -67,7 +67,8 @@ the repository of GMD collection using {help datalibweb}{p_end}
 
 {syntab:Load data}
 {synopt:{opt load}} Loads the data file corresponding to {it:instruction}. 
-See option {it:vcdate()} below.{p_end}
+See option {help indicators##vcdate:vcdate()} and more details 
+{help indicators##load:here}.{p_end}
 {synopt:{opt shape(string)}} Shape of the file corresponding to the set of calculations. 
 It can be either wide or long. default is wide.{p_end}
 {syntab:Debugging}
@@ -331,6 +332,7 @@ shorthand like "all" to refer to a larger set of countries.
 {phang}
 {opt gpwg2}  
 
+{marker load}{...}
 {dlgtab:Load data}
 {phang}
 {opt load} This option allows the user to load any file created by {cmd:instructions}. 
