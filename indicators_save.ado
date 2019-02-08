@@ -77,16 +77,15 @@ if (_rc | "`force'" == "force") {
 	
 	local user=c(username)
 	
-	
-	char _dta[datetimeSIF]    "`datetime'"
-	char _dta[datetimeHRF]    "`datetimeHRF'"
-	char _dta[datetimeSIF_rf] "`vcnumber'"
-	char _dta[datetimeHRF_rf] "`datetimeHRF_rf'"
-	char _dta[basename]       "`basename'"
-	char _dta[calcset]        "`calcset'"
-	char _dta[shape]          "wide"
-	char _dta[user]           "`user'"
-	
+	char _dta[`calcset'_datetimeSIF]    "`datetime'"
+	char _dta[`calcset'_datetimeHRF]    "`datetimeHRF'"
+	char _dta[`calcset'_datetimeSIF_rf] "`vcnumber'"
+	char _dta[`calcset'_datetimeHRF_rf] "`datetimeHRF_rf'"
+	char _dta[`calcset'_basename]       "`basename'"
+	char _dta[`calcset'_calcset]        "`calcset'"
+	char _dta[`calcset'_shape]          "wide"
+	char _dta[`calcset'_user]           "`user'"
+	char _dta[`calcset'_datasignature_si] "`_dta[datasignature_si]'"
 	
 	*------------------------------------------------
 	*------- Save in wide format---------
