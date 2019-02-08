@@ -63,7 +63,7 @@ if (_rc | "`force'" == "force") {
 	if ("`vcnumber'" != "") {  // if it was restored
 		local vfilename "`basename'_`datetime'_rf_`vcnumber'.dta"
 		local datetimeHRF_rf: disp %tcDDmonCCYY_HH:MM:SS `vcnumber'
-		local datetimeHRF_rf = trim("`dispdate'")
+		local datetimeHRF_rf = trim("`datetimeHRF_rf'")
 	}
 	else {   // if it is new
 		local vfilename "`basename'_`datetime'.dta"
@@ -73,7 +73,7 @@ if (_rc | "`force'" == "force") {
 	*------- Create characteristics of file ---------
 	*------------------------------------------------
 	local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
-	local datetimeHRF = trim("`dispdate'")
+	local datetimeHRF = trim("`datetimeHRF'")
 	
 	
 	char _dta[datetimeSIF]    "`datetime'"
