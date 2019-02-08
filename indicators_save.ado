@@ -75,6 +75,8 @@ if (_rc | "`force'" == "force") {
 	local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
 	local datetimeHRF = trim("`datetimeHRF'")
 	
+	local user=c(username)
+	
 	
 	char _dta[datetimeSIF]    "`datetime'"
 	char _dta[datetimeHRF]    "`datetimeHRF'"
@@ -83,6 +85,7 @@ if (_rc | "`force'" == "force") {
 	char _dta[basename]       "`basename'"
 	char _dta[calcset]        "`calcset'"
 	char _dta[shape]          "wide"
+	char _dta[user]           "`user'"
 	
 	
 	*------------------------------------------------
