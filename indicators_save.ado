@@ -63,7 +63,7 @@ if (_rc | "`force'" == "force") {
 	if ("`vcnumber'" != "") {  // if it was restored
 		local vfilename "`basename'_`datetime'_rf_`vcnumber'.dta"
 		local datetimeHRF_rf: disp %tcDDmonCCYY_HH:MM:SS `vcnumber'
-		local datetimeHRF_rf = trim("`dispdate'")
+		local datetimeHRF_rf = trim("`datetimeHRF_rf'")
 	}
 	else {   // if it is new
 		local vfilename "`basename'_`datetime'.dta"
@@ -73,17 +73,19 @@ if (_rc | "`force'" == "force") {
 	*------- Create characteristics of file ---------
 	*------------------------------------------------
 	local datetimeHRF: disp %tcDDmonCCYY_HH:MM:SS `datetime'
-	local datetimeHRF = trim("`dispdate'")
+	local datetimeHRF = trim("`datetimeHRF'")
 	
+	local user=c(username)
 	
-	char _dta[datetimeSIF]    "`datetime'"
-	char _dta[datetimeHRF]    "`datetimeHRF'"
-	char _dta[datetimeSIF_rf] "`vcnumber'"
-	char _dta[datetimeHRF_rf] "`datetimeHRF_rf'"
-	char _dta[basename]       "`basename'"
-	char _dta[calcset]        "`calcset'"
-	char _dta[shape]          "wide"
-	
+	char _dta[`calcset'_datetimeSIF]    "`datetime'"
+	char _dta[`calcset'_datetimeHRF]    "`datetimeHRF'"
+	char _dta[`calcset'_datetimeSIF_rf] "`vcnumber'"
+	char _dta[`calcset'_datetimeHRF_rf] "`datetimeHRF_rf'"
+	char _dta[`calcset'_basename]       "`basename'"
+	char _dta[`calcset'_calcset]        "`calcset'"
+	char _dta[`calcset'_shape]          "wide"
+	char _dta[`calcset'_user]           "`user'"
+	char _dta[`calcset'_datasignature_si] "`_dta[datasignature_si]'"
 	
 	*------------------------------------------------
 	*------- Save in wide format---------
