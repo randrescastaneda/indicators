@@ -500,15 +500,24 @@ qui {
 			} // end of welfare vars loop
 			
 			* drop welfare variables with missing values in all obs
-			missings dropvars `wlfvars', force
-			local dropvars = "`r(varlist)'"
-			local wlfvars: list wlfvars - dropvars
 			
 			if ("`wlfvars'" == "") {
 				disp in red "No welfare variable available in `filename'"
 				post `ef' ("`region'") ("`countrycode'") ("`year'") ///
 				("`filename'") (12)
 				continue
+			}
+			else {
+				missings dropvars `wlfvars', force
+				local dropvars = "`r(varlist)'"
+				local wlfvars: list wlfvars - dropvars
+				
+				if ("`wlfvars'" == "") {  // one more time after substracting dropvars
+					disp in red "No welfare variable available in `filename'"
+					post `ef' ("`region'") ("`countrycode'") ("`year'") ///
+					("`filename'") (12)
+					continue
+				}
 			}
 			
 			** welfare type
