@@ -44,9 +44,18 @@ syntax anything(name=calcset id="set of calculations"),  ///
 if ("`pause'" == "pause") pause on
 else pause off
 
+* Host name
+if  inlist("`c(hostname)'", "wbgmsbdat002", "wbgmsbdat001", "dpg-stata642") {
+	if  inlist("`c(username)'", "wb384996") {
+		local hdrive "X:"
+	}
+	else local hdrive "\\wbgfscifs01\GTSD"
+}
+else local hdrive "\\wbgfscifs01\GTSD"
+
 * Directory Paths
 
-local out         "\\wbgfscifs01\GTSD\02.core_team\02.data\01.Indicators"
+local out         "`hdrive'\02.core_team\02.data\01.Indicators"
 if ("`reporoot'" == "") local reporoot "`out'"
 
 
