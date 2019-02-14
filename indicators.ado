@@ -767,7 +767,7 @@ qui {
 				cap confirm var datetime
 				if (_rc) _gendatetime, date("`date'") time("`time'")
 				
-				noi desc using `wrk`calc''
+				cap desc using `wrk`calc''
 				if (r(N) == 0) {
 					noi disp in r "Warning: " in y "working file `calc' is empty"
 					continue
