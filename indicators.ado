@@ -44,9 +44,18 @@ syntax anything(name=calcset id="set of calculations"),  ///
 if ("`pause'" == "pause") pause on
 else pause off
 
+* Host name
+if  inlist("`c(hostname)'", "wbgmsbdat002", "wbgmsbdat001", "dpg-stata642") {
+	if  inlist("`c(username)'", "wb384996") {
+		local hdrive "X:"
+	}
+	else local hdrive "\\wbgfscifs01\GTSD"
+}
+else local hdrive "\\wbgfscifs01\GTSD"
+
 * Directory Paths
 
-local out         "\\wbgfscifs01\GTSD\02.core_team\02.data\01.Indicators"
+local out         "`hdrive'\02.core_team\02.data\01.Indicators"
 if ("`reporoot'" == "") local reporoot "`out'"
 
 
@@ -491,15 +500,24 @@ qui {
 			} // end of welfare vars loop
 			
 			* drop welfare variables with missing values in all obs
-			missings dropvars `wlfvars', force
-			local dropvars = "`r(varlist)'"
-			local wlfvars: list wlfvars - dropvars
 			
 			if ("`wlfvars'" == "") {
 				disp in red "No welfare variable available in `filename'"
 				post `ef' ("`region'") ("`countrycode'") ("`year'") ///
 				("`filename'") (12)
 				continue
+			}
+			else {
+				missings dropvars `wlfvars', force
+				local dropvars = "`r(varlist)'"
+				local wlfvars: list wlfvars - dropvars
+				
+				if ("`wlfvars'" == "") {  // one more time after substracting dropvars
+					disp in red "No welfare variable available in `filename'"
+					post `ef' ("`region'") ("`countrycode'") ("`year'") ///
+					("`filename'") (12)
+					continue
+				}
 			}
 			
 			** welfare type
@@ -748,6 +766,12 @@ qui {
 				indicators `calc', load `pause'
 				cap confirm var datetime
 				if (_rc) _gendatetime, date("`date'") time("`time'")
+				
+				noi desc using `wrk`calc''
+				if (r(N) == 0) {
+					noi disp in r "Warning: " in y "working file `calc' is empty"
+					continue
+				}
 				
 				merge 1:1 filename welfarevar `precase' using `wrk`calc'', /* 
 				 */   update replace nogen 
