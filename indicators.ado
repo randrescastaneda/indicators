@@ -80,7 +80,7 @@ qui {
 	local calcset = lower("`calcset'")
 	
 	if ("`plines'" == "")     local plines "1.9 3.2 5.5"
-	if ("`cpivintage'" == "") local cpivintage "v02"
+	if ("`cpivintage'" == "") local cpivintage ""
 	if ("`repository'" == "") local repository "all_GMD"
 	if ("`wbodata'" == "")    local wbodata  NE.CON.PRVT.PC.KD; NY.GDP.PCAP.PP.CD; /* 
 	*/                                       NY.GDP.PCAP.PP.KD; NY.GNP.PCAP.CD;    /*
