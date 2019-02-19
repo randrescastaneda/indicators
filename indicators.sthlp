@@ -90,7 +90,8 @@ pcexp pcinc"{p_end}
 {synopt:{opt reg:ions(string)}} Perform calculations by countries of the same region.{p_end}
 {synopt:{opt mod:ule(string)}} Perform calculations for a specific module of GMD{p_end}
 {synopt:{opt plines(string)}} Poverty lines for poverty. Default is "1.9 3.2 5.5"{p_end}
-{synopt:{opt cpivintage(string)}} Vintage of CPI. default is "v02"{p_end}
+{synopt:{opt cpivintage(string)}} Vintage of CPI. default is {help datalibweb}'s default.
+type the whole vintage, including the "v" and the leading zeros (e.g., v03).{p_end}
 {synopt:{opt type:s(string)}} Type of collection.{p_end}
 {synopt:{opt veralt(string)}} Alternative version of data to be used in calculations{p_end}
 {synopt:{opt vermast(string)}} Master version of the data to be used in calculations.{p_end}
