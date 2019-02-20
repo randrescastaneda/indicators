@@ -285,7 +285,7 @@ qui {
 	====================================================================*/
 	
 	* use "`reporoot'\repo_vc_`repository'.dta", clear
-	indicators repo, load `pause'
+	indicators repo, load `pause' repository(`repository') reporoot(`reporoot')
 	
 	* ----Keep most recent repo or whatever the user selects -----------------------
 	
