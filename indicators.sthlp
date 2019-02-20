@@ -64,6 +64,8 @@ the repository of GMD collection using {help datalibweb}{p_end}
 {synopt:{opt createrepo}} Necessary to create or update repository{p_end}
 {synopt:{opt gpwg2}} Necessary to update GPWG2 independent repo file. Requires option 
 {it:createrepo}{p_end}
+{synopt:{opt repofromfile}} create repo_vc from existing repo_ file. Only works with option 
+{it:createrepo}. {err: This is a temporary solution when datalibweb is not up to date}.{p_end}
 
 {syntab:Load data}
 {synopt:{opt load}} Loads the data file corresponding to {it:instruction}. 
