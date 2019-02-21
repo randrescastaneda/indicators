@@ -24,6 +24,7 @@ syntax anything(name=calcset id="set of calculations"),  ///
 			FILENames(string)                   ///
 			REPOsitory(string)                  ///
 			reporoot(string)                    ///
+			repofromfile                        ///
 			MODule(string)                      ///
 			plines(string)                      ///
 			cpivintage(string)                  ///
@@ -206,16 +207,18 @@ qui {
 		local dt: disp %tdDDmonCCYY date("`c(current_date)'", "DMY")
 		local dt = trim("`dt'")
 		
-		cap datalibweb, repo(erase `repository', force) reporoot("`reporoot'") type(GMD)
-		datalibweb, repo(create `repository') reporoot("`reporoot'") /* 
-		*/         type(GMD) country(`countries') year(`years')       /* 
-		*/         region(`regions') module(`module')
-		
-		noi disp "repo `repository' has been created successfully."
-		
-		use "`reporoot'\repo_`repository'.dta", clear
-		append using "`reporoot'\repo_gpwg2.dta"
-		
+		if ("`repofromfile'" == "") {
+			cap datalibweb, repo(erase `repository', force) reporoot("`reporoot'") type(GMD)
+			datalibweb, repo(create `repository') reporoot("`reporoot'") /* 
+			*/         type(GMD) country(`countries') year(`years')       /* 
+			*/         region(`regions') module(`module')
+			noi disp "repo `repository' has been created successfully."
+			use "`reporoot'\repo_`repository'.dta", clear
+			append using "`reporoot'\repo_gpwg2.dta"			
+		}
+		else {
+			use "`reporoot'\repo_`repository'.dta", clear
+		}
 		
 		* Fix names of surveyid and files
 		local repovars filename surveyid
@@ -282,7 +285,7 @@ qui {
 	====================================================================*/
 	
 	* use "`reporoot'\repo_vc_`repository'.dta", clear
-	indicators repo, load `pause'
+	indicators repo, load `pause' repository(`repository') reporoot(`reporoot')
 	
 	* ----Keep most recent repo or whatever the user selects -----------------------
 	
