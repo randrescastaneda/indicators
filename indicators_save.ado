@@ -97,9 +97,12 @@ if (_rc | "`force'" == "force") {
 	*------------------------------------------------
 	*------------ convert to long--------------------
 	*------------------------------------------------
+	pause save - before reshaping long
 	
-	indicators_reshape_long `calcset'
+	indicators_reshape_long `calcset', `pause'
 	save "`out'/`basename'_long.dta", replace
+	
+	pause save - After reshaping long
 }
 else {
 noi disp "files `basename'* are identical to last version"

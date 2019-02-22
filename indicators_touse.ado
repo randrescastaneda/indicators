@@ -30,7 +30,7 @@ qui {
 		
 		foreach var in vermast veralt {
 			gen ``var'' = subinstr(upper(`var'), "V", "", .)
-			destring ``var'', replace
+			destring ``var'', replace force
 		}
 		
 		bysort `vars': egen  `mmst' = max(`vermast')
