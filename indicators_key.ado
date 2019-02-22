@@ -84,13 +84,13 @@ qui {
 			if inlist("`byvar'" , "edu")        numlist "1/4"
 			
 			local levels = "`r(numlist)'"
-			pause before - tabstat `meanes' [aw `exp'] if `byvar' == `level' , save
 			
 			foreach level of local levels {
 			tempname Mt
 				/* NOTE: This process is significantly slower than the one before, but 
 				in this way we make sure countries that have incomplete values in their
 				categorical variables are included correctly.  */
+			pause before - tabstat `meanes' [aw `exp'] if `byvar' == `level' , save
 			
 				cap tabstat `meanes' [aw `exp'] if `byvar' == `level' , save
 				if (_rc) {
