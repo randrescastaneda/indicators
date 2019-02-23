@@ -115,9 +115,10 @@ if ("`restore'" != "" | "`load'" != "") {
 			local find = "restored from"
 		}
 		else {
-			local vc1  = "`vc'"
-			local vc2  = ""
-			local find = ""
+			local vc1       = "`vc'"
+			local vc2       = ""
+			local find      = ""
+			local dispdate2 = ""
 		}
 		
 		
