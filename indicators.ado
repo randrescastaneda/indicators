@@ -110,9 +110,23 @@ qui {
 	
 	* vcdate
 	if ("`vcdate'" != "") {
-		if !inlist("`vcdate'" , "pick", "choose") {
-			noi disp in red "{it:vcdate()} must be either {it:pick} or {it:choose}"
-			error
+		cap confirm number `vcdate'
+		if (_rc ==0) {
+			local vcnumber = `vcdate'
+			local vcdate: disp %tcDDmonCCYY_HH:MM:SS `vcnumber'
+		}
+		else {
+			if (!regexm("`vcdate'", "^[0-9]+[a-z]+[0-9]+ [0-9]+:[0-9]+:[0-9]+$") /* 
+			 */ | length("`vcdate'")!= 18 | !inlist("`vcdate'" , "pick", "choose")) {
+			 
+				local datesample: disp %tcDDmonCCYY_HH:MM:SS /* 
+				 */   clock("`c(current_date)' `c(current_time)'", "DMYhms")
+				noi disp as err "vcdate() format must be %tdDDmonCCYY, e.g " _c /* 
+				 */ `"{cmd:`=trim("`datesample'")'}"' _n /* 
+				 */ as err "or either {it:pick} or {it:choose}" _n
+				 error
+			}
+			local vcnumber: disp %13.0f clock("`vcdate'", "DMYhms")
 		}
 	}
 	
