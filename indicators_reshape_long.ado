@@ -15,9 +15,12 @@ Output:             dta file
 ==================================================*/
 program define indicators_reshape_long, rclass
 
-syntax anything(name=calcset id="set of calculations")
+syntax anything(name=calcset id="set of calculations"), [ pause ]
 
  version 14
+
+if ("`pause'" == "pause") pause on
+else                      pause off
 
 
 /*==================================================
@@ -34,6 +37,7 @@ drop if _touse != 1
 local vars "filename datetime welfarevar `precase'"
 
 *----- indicator-specific modifications -----------
+pause reshape_long - before reshape
 if inlist("`calcset'", "ine", "shp") {
 	reshape long values, i(`vars') j(case) string
 	
@@ -74,7 +78,7 @@ else {
 	disp as err "calculation invalid"
 	error
 }
-
+pause reshape_long - before reshape
 char _dta[shape]   "long"	
 
 

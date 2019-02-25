@@ -115,9 +115,10 @@ if ("`restore'" != "" | "`load'" != "") {
 			local find = "restored from"
 		}
 		else {
-			local vc1  = "`vc'"
-			local vc2  = ""
-			local find = ""
+			local vc1       = "`vc'"
+			local vc2       = ""
+			local find      = ""
+			local dispdate2 = ""
 		}
 		
 		
@@ -170,7 +171,7 @@ if ("`restore'" != "" | "`load'" != "") {
 	* use "`out'/_vintage/`filename'", clear
 	confirm file "`loadfile'"
 	use "`loadfile'", clear
-	noi disp in y "file " in w `filename' in y " was loaded"
+	noi disp in y "file " in w `filename' in y " (`vcdate') was loaded"
 	
 	return local filename `filename'
 	
