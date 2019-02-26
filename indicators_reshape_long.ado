@@ -79,7 +79,7 @@ else {
 	error
 }
 pause reshape_long - before reshape
-char _dta[shape]   "long"	
+char _dta[ind_`calcset'_shape]   "long"	
 
 
 end

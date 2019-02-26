@@ -77,15 +77,23 @@ if (_rc | "`force'" == "force") {
 	
 	local user=c(username)
 	
-	char _dta[`calcset'_datetimeSIF]    "`datetime'"
-	char _dta[`calcset'_datetimeHRF]    "`datetimeHRF'"
-	char _dta[`calcset'_datetimeSIF_rf] "`vcnumber'"
-	char _dta[`calcset'_datetimeHRF_rf] "`datetimeHRF_rf'"
-	char _dta[`calcset'_basename]       "`basename'"
-	char _dta[`calcset'_calcset]        "`calcset'"
-	char _dta[`calcset'_shape]          "wide"
-	char _dta[`calcset'_user]           "`user'"
-	char _dta[`calcset'_datasignature_si] "`_dta[datasignature_si]'"
+	char _dta[`calcset'_datetimeSIF]
+	char _dta[`calcset'_datetimeHRF]
+	char _dta[`calcset'_basename]
+	char _dta[`calcset'_calcset]
+	char _dta[`calcset'_shape]
+	char _dta[`calcset'_user]
+	char _dta[`calcset'_datasignature_si]
+	
+	char _dta[ind_`calcset'_datetimeSIF]    "`datetime'"
+	char _dta[ind_`calcset'_datetimeHRF]    "`datetimeHRF'"
+	char _dta[ind_`calcset'_datetimeSIF_rf] "`vcnumber'"
+	char _dta[ind_`calcset'_datetimeHRF_rf] "`datetimeHRF_rf'"
+	char _dta[ind_`calcset'_basename]       "`basename'"
+	char _dta[ind_`calcset'_calcset]        "`calcset'"
+	char _dta[ind_`calcset'_shape]          "wide"
+	char _dta[ind_`calcset'_user]           "`user'"
+	char _dta[ind_`calcset'_datasignature_si] "`_dta[datasignature_si]'"
 	
 	*------------------------------------------------
 	*------- Save in wide format---------
