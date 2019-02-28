@@ -115,20 +115,32 @@ qui {
 			local vcnumber = `vcdate'
 			local vcdate: disp %tcDDmonCCYY_HH:MM:SS `vcnumber'
 		}
-		else {
-			if (!regexm("`vcdate'", "^[0-9]+[a-z]+[0-9]+ [0-9]+:[0-9]+:[0-9]+$") /* 
-			 */ | length("`vcdate'")!= 18 | !inlist("`vcdate'" , "pick", "choose")) {
-			 
+		else { // if it not a number only
+			local vcn = 0
+			local vcs = 0
+			if (regexm("`vcdate'", "[0-9]+")) { // if it has at least one number
+				if (!regexm("`vcdate'", "^[0-9]+[a-z]+[0-9]+ [0-9]+:[0-9]+:[0-9]+$") /* 
+					*/ | length("`vcdate'")!= 18) {
+					local vcn = 1
+				}
+				else local vcnumber: disp %13.0f clock("`vcdate'", "DMYhms")
+			}
+			else {  // if only has letters
+				if (!inlist("`vcdate'" , "pick", "choose")) {
+					local vcs = 1
+				}
+			} 
+			
+			if (`vcn' == 1 | `vcs' == 1) {
 				local datesample: disp %tcDDmonCCYY_HH:MM:SS /* 
 				 */   clock("`c(current_date)' `c(current_time)'", "DMYhms")
 				noi disp as err "vcdate() format must be %tdDDmonCCYY, e.g " _c /* 
 				 */ `"{cmd:`=trim("`datesample'")'}"' _n /* 
 				 */ as err "or either {it:pick} or {it:choose}" _n
-				 error
+				 error			
 			}
-			local vcnumber: disp %13.0f clock("`vcdate'", "DMYhms")
 		}
-	}
+	}  // end of vcdate() condition
 	
 	
 	*------------------ SSC commands  ------------------
