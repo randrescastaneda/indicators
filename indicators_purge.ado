@@ -18,17 +18,19 @@ syntax anything(name=calcset id="set of calculations"), /*
   */   [ vcdate(string)     /* 
   */  restore out(string)   /* 
   */  datetime(numlist)     /* 
-  */  shape(string)     /* 
-  */	load ]
+  */  shape(string) purge   /* 
+  */	load                  /* 
+  */	countries(string)       /* 
+  */	years(numlist)        /* 
+  */	]
 
 version 14
 
 *-------------------- Conditions --------------------------
 qui {
 
-if (("`restore'" != "" & "`load'" != "") | /* 
-*/  ("`restore'" == "" & "`load'" == "")) {
-	noi disp in r "you must select either {it:load} or {it:restore}"
+if wordcount("`restore' `load' `purge'") != 1 {
+	noi disp in r "you must select {it:load}, {it:restore}, or {it:purge}"
 	error
 }
 
@@ -38,52 +40,44 @@ if (("`restore'" != "" & "`load'" != "") | /*
 ==================================================*/
 if ("`purge'" != "") {
 	
-	if ("`keep'" == "after") local drop "BEFORE"
-	else                     local drop "AFTER"
+	if (wordcount("`countries'") > 1 & wordcount("`years'") > 1 ) {
+		noi disp in red "You cannot select more than one year with more than one country." _n /* 
+		 */ "This is to avoid errors."
+		error
+	}
+	if (wordcount("`countries'") == 0 & wordcount("`years'") > 0 ) {
+		noi disp in red "You cannot select only years while purging a file." _n /* 
+		 */ "This is to avoid errors."
+		error
+	}
+	
+	
+	cap window stopbox rusure /* 
+	*/  "You are about to delete `countries' in indicators_`calcset'." /* 
+ */ 	"Are your sure you want to make that change?"
+	if (_rc != 0) error
+	
+	local countries_: subinstr local countries " " "|", all
+	local years_:     subinstr local years     " " "|", all
 
 	indicators `calcset', load
 	local filename = "`r(filename)'"
 	
-	indicators_vcselect,  vcdate(`vcdate')
-	local vcvar     = "`r(vcdate)'" 
-	local alldates  = "`r(alldates)'"
-	local datecount = wordcount("`alldates'")
-	confirm var `vcvar'
-	
-	
-	cap window stopbox rusure /* 
-	*/  "You are about to delete vc_* vars and observations `drop' `vcvar'"  /* 
-	*/  " in `filename'" "Are you sure want to make that change?"
-	
-	if (_rc != 0) error
-	
-	
-	mata: A = tokens(st_local("alldates"))
-	mata: A = "vc_" :+ A
-	mata: date = st_local("vcvar")
-	mata: n = selectindex(regexm(A, date))
-	mata: st_local("n", strofreal(n))
-	
-	
-	if ("`keep'" == "after") {
-		keep if inlist(`vcvar', 1, .)
-		foreach v of numlist 1/`=`n'-1' {
-			local var: word `v' of `alldates'
-			drop vc_`var'
-		}
-	}
-	else { 
-		drop if `vcvar' == .
-		foreach v of numlist `=`n'+1'/`datecount' {
-			local var: word `v' of `alldates'
-			drop vc_`var'
-		}
+	drop if regexm(countrycode, "`countries_'")
+	if ("`years'" != "") {
+		drop if regexm(year, "`years_'")
 	}
 	
 	local basename "indicators_`calcset'"
-	cap noi indicators_save `calcset', basename(`basename') out("`out'") /*  
-	*/  datetime(`datetime')
-	
+	cap window stopbox rusure /* 
+	*/  "Do you want to recalculate `calcset' for `countries' in `filename'?" 
+	if (_rc != 0) {
+		cap noi indicators_save `calcset', basename(`basename') out("`out'") /*  
+		*/  datetime(`datetime')
+	}
+	else {
+		cap noi indicators `calcset', countries(`countries') years(`years')
+	}
 }
 
 
