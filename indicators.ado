@@ -78,7 +78,8 @@ qui {
 	local allind_: subinstr local allind " " "|", all
 	
 	*------------------  Conditions  ------------------
-	local calcset = lower("`calcset'")
+	local calcset   = lower("`calcset'")
+	local countries = upper("`countries'")
 	
 	if ("`plines'" == "")     local plines "1.9 3.2 5.5"
 	if ("`cpivintage'" == "") local cpivintage ""
