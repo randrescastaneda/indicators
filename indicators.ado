@@ -193,15 +193,18 @@ qui {
 	/*====================================================================
 	PURGE OR RESTORE
 	====================================================================*/
-	if ("`restore'" != "") {
+	if ("`restore'" != "" | "`purge'" != "") {
 		if (wordcount("`calcset'") != 1) {
 			noi disp in r "set of calculations must be one when using {it:purge} or {it:restore}"
 			error
 		}
-		noi indicators_purge `calcset', vcdate(`vcdate')  /* 
-		*/  `restore' out("`out'") datetime(`datetime')
+		noi indicators_purge `calcset', vcdate(`vcdate')   /* 
+		*/  `restore' out("`out'") datetime(`datetime')    /* 
+		*/  `purge' countries(`countries') years(`years')
 		exit
 	}
+	
+	
 	
 	/*====================================================================
 	REPORT
